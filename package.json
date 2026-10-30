@@ -6,7 +6,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build gateway && nest build auth && nest build people && nest build ops && nest build ai",
-    "start": "nest start gateway",
+    "start": "node scripts/start-prod.mjs",
     "start:gateway": "nest start gateway --watch",
     "start:auth": "nest start auth --watch",
     "start:people": "nest start people --watch",
