@@ -481,8 +481,16 @@ export class PeopleService {
     } else if (existing && 'previousProfile' in existing) {
       doc.previousProfile = existing.previousProfile;
     }
-    // Conservar vínculo de cuidador previo si no se está creando uno nuevo.
-    if (existing?.caregiverAccountId && body.caregiverAccountId === undefined) {
+    // Vincular cuidador existente (accountId) o conservar el previo si no se envía.
+    if (body.caregiverAccountId != null && String(body.caregiverAccountId).trim()) {
+      const cg = String(body.caregiverAccountId).trim();
+      doc.caregiverAccountId = cg;
+      doc.caregiverId = String(body.caregiverId || cg).trim() || cg;
+      if (body.caregiverName != null) doc.caregiverName = String(body.caregiverName);
+      if (body.caregiverEmail != null) doc.caregiverEmail = String(body.caregiverEmail);
+      if (body.caregiverPhone != null) doc.caregiverPhone = String(body.caregiverPhone);
+      doc.tieneCuidador = true;
+    } else if (existing?.caregiverAccountId && body.caregiverAccountId === undefined) {
       doc.caregiverAccountId = existing.caregiverAccountId;
       doc.caregiverId = existing.caregiverId || existing.caregiverAccountId;
       doc.caregiverName = existing.caregiverName;
