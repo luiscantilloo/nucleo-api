@@ -6,12 +6,13 @@ import { clinicoDelTerritorio } from '../libs/common/src/clinico.ts';
 
 const hoy = new Date(Date.UTC(2026, 9, 10));
 
-test('H-007: fecha de nacimiento futura, inválida o fuera de 18–110 años → error', () => {
+test('H-007: fecha de nacimiento futura, inválida o fuera de 60–110 años → error', () => {
   assert.match(String(errorFechaNacimiento('2099-01-01', hoy)), /futura/);
   assert.match(String(errorFechaNacimiento('1980-02-31', hoy)), /no es válida/);
-  assert.match(String(errorFechaNacimiento('2010-01-01', hoy)), /18 y 110/);
-  assert.match(String(errorFechaNacimiento('1900-01-01', hoy)), /18 y 110/);
-  assert.equal(errorFechaNacimiento('1980-05-01', hoy), null);
+  assert.match(String(errorFechaNacimiento('2010-01-01', hoy)), /60 y 110/);
+  assert.match(String(errorFechaNacimiento('1900-01-01', hoy)), /60 y 110/);
+  assert.match(String(errorFechaNacimiento('1980-05-01', hoy)), /60 y 110/);
+  assert.equal(errorFechaNacimiento('1960-05-01', hoy), null);
   assert.equal(errorFechaNacimiento('', hoy), null, 'vacío lo controla «Faltan datos»');
 });
 

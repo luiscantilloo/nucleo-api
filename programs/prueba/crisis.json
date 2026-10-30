@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "bloqueadas": [
+    {
+      "instrumento": "animo",
+      "pregunta": 1,
+      "si": "> 0",
+      "categoria": "riesgo_suicida",
+      "editable": false
+    }
+  ],
+  "categorias": {
+    "riesgo_suicida": {
+      "frases": ["mejor no estar", "ya no sirvo"],
+      "avisar": ["clinico"],
+      "plazo_min": 30,
+      "pausar": true
+    }
+  },
+  "texto": {
+    "riesgo_suicida": "{trato}, gracias por decirlo. Si está en peligro, llame al 123."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "id": "animo",
+  "nombre": "Ánimo (provisional)",
+  "provisional": true,
+  "nota": "Sustituible por GDS-15 u otro instrumento del geriatra sin cambiar código.",
+  "preguntas": [
+    { "i": 1, "texto": "¿Se ha sentido triste o deprimido/a la mayor parte del tiempo?", "opciones": [{ "v": 0, "label": "No" }, { "v": 1, "label": "Sí" }] },
+    { "i": 2, "texto": "¿Ha dejado de hacer actividades que antes disfrutaba?", "opciones": [{ "v": 0, "label": "No" }, { "v": 1, "label": "Sí" }] },
+    { "i": 3, "texto": "¿Siente que su vida está vacía?", "opciones": [{ "v": 0, "label": "No" }, { "v": 1, "label": "Sí" }] }
+  ],
+  "cortes": [
+    { "max": 0, "nivel": "bajo" },
+    { "max": 1, "nivel": "leve" },
+    { "max": 3, "nivel": "alto" }
+  ]
+}

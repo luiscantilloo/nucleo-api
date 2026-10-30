@@ -1,0 +1,36 @@
+{
+  "nombre": "Parienta",
+  "colores": {
+    "noche": "#222220",
+    "tinta": "#222220",
+    "niebla": "#FBFAF3",
+    "blanco": "#FBFAF3",
+    "plata": "#C0DFC8",
+    "plata_oscura": "#27683A",
+    "azul": "#27683A",
+    "azul_claro": "#359A54",
+    "teal": "#359A54",
+    "ambar": "#F26B3A",
+    "rojo": "#B42318",
+    "lineas": "#C0DFC8",
+    "texto2": "#27683A",
+    "lima": "#E0DB55",
+    "crema_clara": "#FDF2B3",
+    "naranja": "#F26B3A",
+    "verde": "#27683A",
+    "verde_medio": "#359A54"
+  },
+  "tipografia": {
+    "titulos": "Bricolage Grotesque",
+    "texto": "Bricolage Grotesque",
+    "mono": "DM Mono"
+  },
+  "accesibilidad": {
+    "letra_min_px": 20,
+    "boton_min_px": 56,
+    "boton_escuchar": true,
+    "una_accion_por_pantalla": true
+  },
+  "logo": "/parienta/logo/parienta-horizontal-principal.svg",
+  "logo_claro": "/parienta/logo/parienta-horizontal-una-tinta-hueso.svg"
+}

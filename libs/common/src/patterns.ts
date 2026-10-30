@@ -80,6 +80,8 @@ export const APP_STATE_SLICES = [
   'aiLog',
   /** Check-ins de ánimo por paciente (historial clínico). */
   'moodLogs',
+  /** Partidas de juegos (Sudoku) por paciente (historial clínico). */
+  'gameLogs',
   'recursos',
   'activity',
   'accessLog',
@@ -126,8 +128,9 @@ export function mergeAppStateById(
     }
     const rank = (a: Record<string, unknown>) => {
       const s = String(a.status || '');
-      if (s === 'closed') return 4;
-      if (s === 'mine' || s === 'retry') return 3;
+      if (s === 'closed') return 5;
+      if (s === 'awaiting_patient') return 4;
+      if (s === 'mine' || s === 'retry' || s === 'other') return 3;
       if (s === 'new') return 2;
       return 1;
     };
@@ -202,15 +205,12 @@ export function mergePathRequests(
 /**
  * Reglas: no pisar rules.pending del admin con un PUT del clínico sin pending.
  * Solo se limpia si hay aprobación (versión nueva) o pendingClearedAt ≥ pending.at.
+ * También fusiona rules.byTerr (pack por territorio) con la misma lógica de pending.
  */
-export function mergeRulesSlice(
-  existing: unknown,
-  incoming: unknown,
-): Record<string, unknown> | unknown {
-  if (!incoming || typeof incoming !== 'object') return existing;
-  if (!existing || typeof existing !== 'object') return incoming;
-  const e = existing as Record<string, unknown>;
-  const i = incoming as Record<string, unknown>;
+function mergeRulesPendingPack(
+  e: Record<string, unknown>,
+  i: Record<string, unknown>,
+): Record<string, unknown> {
   const out: Record<string, unknown> = { ...e, ...i };
   const ePend =
     e.pending && typeof e.pending === 'object'
@@ -236,10 +236,11 @@ export function mergeRulesSlice(
     if (Math.max(verAt, cleared) >= pendAt && pendAt > 0) {
       out.pending = null;
     } else {
-      // Persist ajeno sin resolver → conservar solicitud pendiente.
       out.pending = ePend;
       if (e.risk !== undefined) out.risk = e.risk;
       if (e.dig !== undefined) out.dig = e.dig;
+      if (e.phq !== undefined) out.phq = e.phq;
+      if (e.ctx !== undefined) out.ctx = e.ctx;
     }
   } else {
     out.pending = i.pending ?? null;
@@ -247,7 +248,48 @@ export function mergeRulesSlice(
   return out;
 }
 
-/** pathOverrides: unión de claves; incoming gana en conflicto. */
+export function mergeRulesSlice(
+  existing: unknown,
+  incoming: unknown,
+): Record<string, unknown> | unknown {
+  if (!incoming || typeof incoming !== 'object') return existing;
+  if (!existing || typeof existing !== 'object') return incoming;
+  const e = existing as Record<string, unknown>;
+  const i = incoming as Record<string, unknown>;
+  const out = mergeRulesPendingPack(e, i);
+
+  const eb =
+    e.byTerr && typeof e.byTerr === 'object' && !Array.isArray(e.byTerr)
+      ? (e.byTerr as Record<string, unknown>)
+      : {};
+  const ib =
+    i.byTerr && typeof i.byTerr === 'object' && !Array.isArray(i.byTerr)
+      ? (i.byTerr as Record<string, unknown>)
+      : {};
+  if (Object.keys(eb).length || Object.keys(ib).length) {
+    const keys = new Set([...Object.keys(eb), ...Object.keys(ib)]);
+    const byTerr: Record<string, unknown> = {};
+    keys.forEach((k) => {
+      const ep =
+        eb[k] && typeof eb[k] === 'object'
+          ? (eb[k] as Record<string, unknown>)
+          : {};
+      const ip =
+        ib[k] && typeof ib[k] === 'object'
+          ? (ib[k] as Record<string, unknown>)
+          : {};
+      byTerr[k] = mergeRulesPendingPack(ep, ip);
+    });
+    out.byTerr = byTerr;
+  }
+  return out;
+}
+
+/**
+ * pathOverrides: unión por perfil; dentro de cada perfil, `s` se fusiona
+ * clave a clave para no perder '' (apagado) cuando un cliente manda un
+ * parcial sin esa herramienta.
+ */
 export function mergePathOverrides(
   existing: unknown,
   incoming: unknown,
@@ -260,5 +302,29 @@ export function mergePathOverrides(
     incoming && typeof incoming === 'object' && !Array.isArray(incoming)
       ? (incoming as Record<string, unknown>)
       : {};
-  return { ...e, ...i };
+  const out: Record<string, unknown> = { ...e };
+  Object.keys(i).forEach((k) => {
+    const prev =
+      e[k] && typeof e[k] === 'object' && !Array.isArray(e[k])
+        ? (e[k] as Record<string, unknown>)
+        : {};
+    const next =
+      i[k] && typeof i[k] === 'object' && !Array.isArray(i[k])
+        ? (i[k] as Record<string, unknown>)
+        : {};
+    const prevS =
+      prev.s && typeof prev.s === 'object' && !Array.isArray(prev.s)
+        ? (prev.s as Record<string, unknown>)
+        : {};
+    const nextS =
+      next.s && typeof next.s === 'object' && !Array.isArray(next.s)
+        ? (next.s as Record<string, unknown>)
+        : {};
+    out[k] = {
+      ...prev,
+      ...next,
+      s: { ...prevS, ...nextS },
+    };
+  });
+  return out;
 }

@@ -1,0 +1,19 @@
+{
+  "id": "ideacion",
+  "nombre": "Ideación / riesgo",
+  "provisional": true,
+  "bloqueada": true,
+  "preguntas": [
+    {
+      "i": 1,
+      "texto": "En las últimas dos semanas, ¿con qué frecuencia ha pensado que estaría mejor muerto o muerta, o en hacerse daño de alguna forma?",
+      "opciones": [
+        { "v": 0, "label": "Nunca" },
+        { "v": 1, "label": "Varios días" },
+        { "v": 2, "label": "Más de la mitad de los días" },
+        { "v": 3, "label": "Casi todos los días" }
+      ]
+    }
+  ],
+  "corte_crisis": { "pregunta": 1, "si": "> 0", "categoria": "riesgo_suicida" }
+}

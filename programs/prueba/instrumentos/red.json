@@ -1,0 +1,11 @@
+{
+  "id": "red",
+  "nombre": "Red (prueba)",
+  "preguntas": [
+    { "n": 1, "texto": "¿Tiene a quién llamar?", "opciones": [0, 1, 2] }
+  ],
+  "cortes": [
+    { "nivel": "debil", "max": 0 },
+    { "nivel": "fuerte", "min": 1 }
+  ]
+}

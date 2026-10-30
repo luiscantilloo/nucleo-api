@@ -48,7 +48,10 @@ function isPrivileged(role: string, roleId?: string) {
   return (
     isAdminOrClinico(role, roleId) ||
     id === 'experto' ||
+    id === 'gestor' ||
     r === 'experto de campo' ||
+    r === 'gestor de campo' ||
+    r === 'gestor' ||
     r === 'experto'
   );
 }

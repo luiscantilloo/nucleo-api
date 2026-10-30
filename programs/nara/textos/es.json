@@ -1,0 +1,19 @@
+{
+  "app": {
+    "nombre": "NARA",
+    "ingreso_titulo": "Ingresar a NARA",
+    "teo_nombre": "TEO"
+  },
+  "roles": {
+    "experto": "Experto de campo",
+    "clinico": "Clínico",
+    "paciente": "Mi acompañamiento",
+    "admin": "Administración",
+    "observador": "Observador"
+  },
+  "trato": {
+    "m": "solo",
+    "f": "sola",
+    "nb": "sole"
+  }
+}

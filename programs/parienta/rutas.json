@@ -1,0 +1,28 @@
+{
+  "version": "0.1.0",
+  "provisional": true,
+  "por_perfil": {
+    "PL01": ["recordatorios", "grupo_comunitario"],
+    "PL02": ["llamada_acompanamiento", "recordatorios"],
+    "PL03": ["llamada_acompanamiento", "actividad_fisica", "recordatorios"],
+    "PL04": ["visita_domiciliaria", "llamada_acompanamiento", "acompanamiento_citas"],
+    "PL05": ["llamada_acompanamiento", "orientacion_cuidador", "atencion_psicologica"],
+    "PL06": ["visita_domiciliaria", "llamada_acompanamiento", "remision_salud"],
+    "PL07": ["atencion_psicologica", "visita_domiciliaria", "remision_salud"],
+    "PL08": ["proteccion", "atencion_psicologica", "visita_domiciliaria"]
+  },
+  "reglas": [
+    {
+      "id": "R5",
+      "si": "sin_cuidador",
+      "quitar": ["orientacion_cuidador"],
+      "agregar": ["llamada_acompanamiento"]
+    },
+    {
+      "id": "R6",
+      "si": "alerta_abierta:abandono_maltrato",
+      "agregar": ["proteccion"],
+      "bloquear_quitar": ["proteccion"]
+    }
+  ]
+}

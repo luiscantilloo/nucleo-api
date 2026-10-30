@@ -18,6 +18,7 @@ export class PatientsUpsertService {
       'experto',
       'clinico',
       'paciente',
+      'cuidador',
     ]);
     if ('error' in auth) return auth.error;
 
@@ -28,6 +29,99 @@ export class PatientsUpsertService {
       return { ok: false, status: 400, error: 'id y name son obligatorios.' };
     const now = new Date();
     const db = await this.mongo.db();
+
+    // Cuidador: solo abrir/cancelar prompt de ayuda en personas vinculadas
+    // (la crisis real la confirma el paciente con «ayuda»).
+    if (auth.user.roleId === 'cuidador') {
+      const cuidFilter = {
+        id,
+        $or: [
+          { caregiverId: auth.user.id },
+          { caregiverAccountId: auth.user.id },
+          { cuidadorId: auth.user.id },
+          { cuidadoraId: auth.user.id },
+          { caregivers: auth.user.id },
+          { 'caregivers.id': auth.user.id },
+          { 'caregivers.accountId': auth.user.id },
+          { 'caregivers.caregiverId': auth.user.id },
+        ],
+      };
+      const linked =
+        (await db.collection('people').findOne(cuidFilter)) ||
+        (await db.collection('patients').findOne(cuidFilter));
+      if (!linked) {
+        return {
+          ok: false,
+          status: 403,
+          error: 'Solo puede actuar sobre personas a su cargo.',
+        };
+      }
+      const clearPrompt =
+        body.crisisPromptAt === null ||
+        body.crisisPrompt === false ||
+        body.crisisPrompt === 0;
+      const openPrompt =
+        body.crisisPrompt === true ||
+        (body.crisisPromptAt != null && Number(body.crisisPromptAt) > 0);
+      const locRaw =
+        body.crisisPromptLoc && typeof body.crisisPromptLoc === 'object'
+          ? (body.crisisPromptLoc as Record<string, unknown>)
+          : null;
+      const locLat = locRaw ? Number(locRaw.lat) : NaN;
+      const locLng = locRaw ? Number(locRaw.lng) : NaN;
+      const hasLoc =
+        !!locRaw && Number.isFinite(locLat) && Number.isFinite(locLng);
+      if (!clearPrompt && !openPrompt && !hasLoc) {
+        return {
+          ok: false,
+          status: 403,
+          error:
+            'El cuidador solo puede abrir/cancelar la ayuda o compartir GPS en crisis.',
+        };
+      }
+      // Solo GPS: hace falta prompt abierto o crisis ya activa.
+      if (hasLoc && !clearPrompt && !openPrompt) {
+        const cur = await db.collection('patients').findOne({ id });
+        const promptOpen = Number(cur?.crisisPromptAt || 0) > 0;
+        const inCrisis =
+          cur?.crisisLock === true ||
+          /^crisis$/i.test(String(cur?.status || cur?.signal || ''));
+        if (!promptOpen && !inCrisis) {
+          return {
+            ok: false,
+            status: 403,
+            error: 'No hay ayuda abierta ni crisis activa para compartir GPS.',
+          };
+        }
+      }
+      const patch: Record<string, unknown> = { updatedAt: now };
+      if (clearPrompt || openPrompt) {
+        patch.crisisPromptAt = clearPrompt ? null : Date.now();
+      }
+      if (clearPrompt) {
+        patch.crisisPromptLoc = null;
+      } else if (hasLoc) {
+        const at = Number(locRaw!.at) || Date.now();
+        patch.crisisPromptLoc = {
+          lat: locLat,
+          lng: locLng,
+          at,
+          until: Number(locRaw!.until) || at + 24 * 60 * 60 * 1000,
+          ...(Number.isFinite(Number(locRaw!.accuracy))
+            ? { accuracy: Number(locRaw!.accuracy) }
+            : {}),
+        };
+      }
+      await db.collection('patients').updateOne({ id }, { $set: patch }, { upsert: false });
+      const doc = await db.collection('patients').findOne({ id });
+      if (!doc)
+        return { ok: false, status: 404, error: 'Ficha no encontrada.' };
+      return {
+        ok: true,
+        status: 200,
+        patient: publicPatient(doc as Record<string, unknown>),
+      };
+    }
 
     // Paciente: Crisis (ayuda) o Activo (estoy bien) en su propia ficha.
     if (auth.user.roleId === 'paciente') {
@@ -77,6 +171,8 @@ export class PatientsUpsertService {
           crisisAttendedAt: null,
           crisisAttendedOutcome: null,
           crisisBtnReady: false,
+          crisisPromptAt: null,
+          // Conserva crisisPromptLoc: el GPS del cuidador sigue alimentando la alerta.
         });
       } else if (isInactive && !isWell) {
         Object.assign(patch, {
@@ -95,6 +191,8 @@ export class PatientsUpsertService {
           crisisAttendedOutcome: null,
           crisisBtnReady: true,
           crisisBtnReadyAt: Date.now(),
+          crisisPromptAt: null,
+          crisisPromptLoc: null,
         });
       }
       await db.collection('patients').updateOne({ id: patientId }, { $set: patch });

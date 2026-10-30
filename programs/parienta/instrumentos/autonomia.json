@@ -1,0 +1,15 @@
+{
+  "id": "autonomia",
+  "nombre": "Autonomía y caídas (provisional)",
+  "provisional": true,
+  "preguntas": [
+    { "i": 1, "texto": "¿Necesita ayuda para tareas diarias (baño, comida, limpieza)?", "opciones": [{ "v": 0, "label": "No" }, { "v": 1, "label": "A veces" }, { "v": 2, "label": "Sí, siempre" }] },
+    { "i": 2, "texto": "¿Ha tenido alguna caída en el último año?", "opciones": [{ "v": 0, "label": "No" }, { "v": 1, "label": "Sí" }] },
+    { "i": 3, "texto": "¿Sale de casa sin compañía?", "opciones": [{ "v": 0, "label": "Sí" }, { "v": 1, "label": "A veces" }, { "v": 2, "label": "No" }] }
+  ],
+  "cortes": [
+    { "max": 1, "nivel": "alta" },
+    { "max": 3, "nivel": "media" },
+    { "max": 5, "nivel": "baja" }
+  ]
+}

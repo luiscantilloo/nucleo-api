@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { isGestorRoleId } from '@nara/common';
 import { MongoStore } from '@nara/database';
 import { SessionService } from '@nara/auth-core';
 import { requireRoles } from '../shared/require-roles';
@@ -14,13 +15,14 @@ export class WorklistsService {
     const auth = await requireRoles(this.sessions, token, [
       'admin',
       'experto',
+      'gestor',
       'clinico',
     ]);
     if ('error' in auth) return auth.error;
     const db = await this.mongo.db();
-    // SPEC-02 FR-02.1: el experto solo ve su cola; el clínico, la de las personas de su territorio.
+    // SPEC-02 FR-02.1: el gestor/experto solo ve su cola; el clínico, la de las personas de su territorio.
     let q: Record<string, unknown> = expertId ? { expertId } : {};
-    if (auth.user.roleId === 'experto') q = { expertId: auth.user.id };
+    if (isGestorRoleId(auth.user.roleId)) q = { expertId: auth.user.id };
     else if (auth.user.roleId === 'clinico') {
       const terr = String(auth.user.terr || '');
       const ids = (await db.collection('people').find({ terr }, { projection: { id: 1 } }).toArray()).map((p) => p.id);
@@ -55,6 +57,7 @@ export class WorklistsService {
     const auth = await requireRoles(this.sessions, token, [
       'admin',
       'experto',
+      'gestor',
       'clinico',
     ]);
     if ('error' in auth) return auth.error;
@@ -103,6 +106,7 @@ export class WorklistsService {
     const auth = await requireRoles(this.sessions, token, [
       'admin',
       'experto',
+      'gestor',
       'clinico',
     ]);
     if ('error' in auth) return auth.error;

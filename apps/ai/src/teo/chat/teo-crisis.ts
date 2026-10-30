@@ -1,40 +1,34 @@
-// Igual que APP_STATE_KEY de @nara/common (patterns.ts). Sin alias para que `node --test` cargue este archivo.
+import {
+  crisisCheck as crisisCheckNucleo,
+  esRespuestaCrisis as esRespuestaCrisisNucleo,
+  textoDeCrisis as textoPlantilla,
+} from '../../../../../libs/crisis/src/detect';
+
+// Igual que APP_STATE_KEY de @nara/common (patterns.ts).
 const APP_STATE_KEY = 'app_state';
 
 /**
- * H-001 (reporte TRL 2026-10-10, SPEC-001): la crisis que detecta TEO se escala en el servidor.
- * Antes solo la escalaba el navegador, con el id de la cuenta, y el servidor la descartaba.
+ * H-001: la crisis que detecta TEO se escala en el servidor.
+ * Frases y categorías: programs/parienta/crisis.json vía libs/crisis.
  */
 
-// Misma lista que `CRISIS_TERMS` de nara-web (lib/store/store.js), para que el servidor escale
-// aunque el proveedor de IA no responda.
-export const CRISIS_TERMS = [
-  'suicid', 'suisid', 'matarme', 'matarm', 'quitarme la vida', 'kitarme la vida', 'acabar con mi vida', 'acabar con todo', 'no quiero vivir', 'ya no quiero vivir', 'no kiero vivir',
-  'quiero morir', 'kiero morir', 'me quiero morir', 'mejor muert', 'estaria mejor muert', 'estaría mejor muert', 'me muero', 'morirme', 'hacerme da', 'hacerme dano', 'cortarme',
-  'ya no aguanto mas', 'ya no aguanto más', 'no aguanto mas', 'no aguanto más', 'quisiera desaparecer', 'quiero desaparecer', 'desaparecer para siempre', 'no quiero seguir', 'no le veo sentido', 'mejor sin mi', 'mejor sin mí', 'ser una carga', 'despedirme',
-];
+/** @deprecated Preferir configuración en programs/<id>/crisis.json vía @nucleo/crisis */
+export const CRISIS_TERMS: string[] = [];
 
-const norm = (t: string) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-
-/** Término de riesgo que aparece en el texto, o null. */
+/** Término o categoría de riesgo (libs/crisis + programs/parienta). */
 export function crisisCheck(text: string): string | null {
-  const n = norm(String(text || ''));
-  if (/^\s*ayuda\s*!*$/.test(n)) return 'AYUDA';
-  return CRISIS_TERMS.find((k) => n.includes(norm(k))) || null;
+  return crisisCheckNucleo(text);
 }
 
-/** El prompt de TEO pide responder solo «CRISIS» ante riesgo (teo-voice.ts). */
 export function esRespuestaCrisis(text: string): boolean {
-  return /^\W*crisis\W*$/i.test(String(text || '').trim());
+  return esRespuestaCrisisNucleo(text);
 }
 
-/** Texto para la persona. Solo promete la llamada si el servidor guardó la alerta (FR-004). */
+/** Texto fijo del programa. `escalada` mantiene la firma usada por teo-chat. */
 export function textoDeCrisis(nombre: string, escalada: boolean): string {
-  const lineas =
-    'Si está en peligro ahora, llame al 123. Si necesita hablar con alguien, marque la Línea 192, opción 4.';
-  return escalada
-    ? `${nombre}, gracias por contármelo. Lo que siente es importante y no tiene que pasarlo sola. Voy a pausar esta conversación para que una persona del equipo le llame en menos de 30 minutos. ${lineas}`
-    : `${nombre}, gracias por contármelo. Lo que siente es importante. ${lineas}`;
+  const base = textoPlantilla(nombre, 'riesgo_suicida');
+  if (!escalada) return base;
+  return `${base} Voy a pausar esta conversación para que el equipo le contacte pronto.`;
 }
 
 type Db = {

@@ -1,8 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { DocumentStore } from '@nara/common';
-import { andScope, clinicoDelTerritorio, errorFechaNacimiento, errorTelefono, inScope, terrFilter } from '@nara/common';
+import {
+  andScope,
+  PROGRAM_ORG,
+  caregiverAccountDoc,
+  clinicoDelTerritorio,
+  errorEdadCuidador,
+  errorFechaNacimiento,
+  errorTelefono,
+  inScope,
+  normalizeCaregiverInput,
+  parseCaregiverFlag,
+  passwordPolicyError,
+  terrFilter,
+} from '@nara/common';
 import { DOCUMENT_STORE } from '@nara/database';
-import { SessionService } from '@nara/auth-core';
+import { SessionService, hashPassword } from '@nara/auth-core';
 import { requireRoles } from '../shared/require-roles';
 import { publicPerson } from '../shared/mappers/person.mapper';
 import { observerSummary } from '../shared/mappers/observer-summary';
@@ -26,6 +39,7 @@ export class PeopleService {
       'experto',
       'clinico',
       'observador',
+      'cuidador',
     ]);
     if ('error' in auth) return auth.error;
 
@@ -33,6 +47,32 @@ export class PeopleService {
     if (auth.user.roleId === 'observador') {
       const rows = await this.store.findMany('people', { archived: { $ne: true } }, { limit: 20000 });
       return { ok: true, status: 200, summary: observerSummary(rows) };
+    }
+
+    const limit = Math.min(Math.max(Number(data.limit) || 5000, 1), 20000);
+    const skip = Math.max(Number(data.skip) || 0, 0);
+
+    // Cuidador: solo personas vinculadas a su cuenta (no por territorio).
+    if (auth.user.roleId === 'cuidador') {
+      const filter = {
+        archived: { $ne: true },
+        $or: [
+          { caregiverAccountId: auth.user.id },
+          { caregiverId: auth.user.id },
+        ],
+      };
+      const [total, rows] = await Promise.all([
+        this.store.count('people', filter),
+        this.store.findMany('people', filter, { sort: { name: 1 }, limit, skip }),
+      ]);
+      return {
+        ok: true,
+        status: 200,
+        total,
+        limit,
+        skip,
+        people: rows.map(publicPerson),
+      };
     }
 
     const client: Record<string, unknown> = {};
@@ -51,8 +91,6 @@ export class PeopleService {
       return { ok: false, status: 403, error: 'Sin permiso para esta acción.' };
     }
     const filter = andScope(andScope(scope, client), { archived: { $ne: true } });
-    const limit = Math.min(Math.max(Number(data.limit) || 5000, 1), 20000);
-    const skip = Math.max(Number(data.skip) || 0, 0);
     const [total, rows] = await Promise.all([
       this.store.count('people', filter),
       this.store.findMany('people', filter, { sort: { name: 1 }, limit, skip }),
@@ -443,6 +481,16 @@ export class PeopleService {
     } else if (existing && 'previousProfile' in existing) {
       doc.previousProfile = existing.previousProfile;
     }
+    // Conservar vínculo de cuidador previo si no se está creando uno nuevo.
+    if (existing?.caregiverAccountId && body.caregiverAccountId === undefined) {
+      doc.caregiverAccountId = existing.caregiverAccountId;
+      doc.caregiverId = existing.caregiverId || existing.caregiverAccountId;
+      doc.caregiverName = existing.caregiverName;
+      doc.caregiverEmail = existing.caregiverEmail;
+      doc.caregiverPhone = existing.caregiverPhone;
+      doc.tieneCuidador = true;
+    }
+
     await this.store.upsert('people', { id }, doc);
 
     // Espejo clínico: Mis pacientes / admin leen colección patients.
@@ -450,7 +498,7 @@ export class PeopleService {
       doc.profile ||
       doc.pendingEval === true ||
       body.pendingEval === false ||
-      /por\s*aprobar|activo|aprobado|rechazad|terminado/i.test(
+      /por\s*aprobar|activo|aprobado|rechazad|terminado|sin\s*evaluación/i.test(
         String(doc.status || ''),
       )
     ) {
@@ -501,6 +549,286 @@ export class PeopleService {
       });
     }
 
-    return { ok: true, status: 200, person: publicPerson(doc) };
+    try {
+      const acc = await this.ensurePatientAccount(id, doc, body, now);
+      if (acc?.accountId) {
+        doc.accountId = acc.accountId;
+      }
+    } catch (err) {
+      return {
+        ok: false,
+        status: 409,
+        error:
+          err instanceof Error
+            ? err.message
+            : 'No se pudo crear la cuenta de la persona acompañada.',
+      };
+    }
+
+    try {
+      const cg = await this.attachCaregiver(id, String(terr || ''), body, now);
+      if (cg) Object.assign(doc, cg.link);
+    } catch (err) {
+      return {
+        ok: false,
+        status: 409,
+        error:
+          err instanceof Error
+            ? err.message
+            : 'No se pudo crear la cuenta del cuidador.',
+      };
+    }
+
+    return {
+      ok: true,
+      status: 200,
+      person: publicPerson(doc),
+    };
+  }
+
+  /** Crea cuenta de ingreso para la persona acompañada (alta desde gestor). */
+  private async ensurePatientAccount(
+    personId: string,
+    doc: Record<string, unknown>,
+    body: Record<string, unknown>,
+    now: Date,
+  ): Promise<{ accountId: string } | null> {
+    const email = String(body.email || doc.email || '')
+      .trim()
+      .toLowerCase();
+    const password = String(body.password || '').trim();
+    const existingAccId = String(
+      doc.accountId || body.accountId || '',
+    ).trim();
+    if (existingAccId) return { accountId: existingAccId };
+
+    const linked = await this.store.findOne('accounts', {
+      $or: [{ personId }, { patientId: personId }],
+    });
+    if (linked?.id) {
+      await this.store.updateOne(
+        'people',
+        { id: personId },
+        { $set: { accountId: linked.id, updatedAt: now } },
+      );
+      await this.store.updateOne(
+        'patients',
+        { id: personId },
+        { $set: { accountId: linked.id, updatedAt: now } },
+      );
+      return { accountId: String(linked.id) };
+    }
+
+    // Sin correo/clave: solo ficha (no aparece en Usuarios hasta tener acceso).
+    if (!email || !/@/.test(email)) return null;
+    if (!password) {
+      throw new Error(
+        'Defina una contraseña para el acceso de la persona acompañada.',
+      );
+    }
+
+    const emailTaken = await this.store.findOne('accounts', { email });
+    if (emailTaken) {
+      throw new Error('Ya existe una cuenta con el correo de la persona.');
+    }
+
+    const name = String(doc.name || '').trim();
+    const policyErr = passwordPolicyError({
+      password,
+      email,
+      name,
+      role: 'Persona acompañada',
+      roleId: 'paciente',
+    });
+    if (policyErr) throw new Error(policyErr);
+
+    const accountId = `u${Date.now().toString(36)}`;
+    const passwordHash = await hashPassword(password);
+    await this.store.upsert('accounts', { id: accountId }, {
+      id: accountId,
+      name,
+      firstName: String(doc.firstName || ''),
+      lastName: String(doc.lastName || ''),
+      email,
+      contact: email,
+      phone: String(doc.phone || ''),
+      role: 'Persona acompañada',
+      roleId: 'paciente',
+      terr: String(doc.terr || ''),
+      org: PROGRAM_ORG,
+      status: 'Activo',
+      personId,
+      patientId: personId,
+      passwordHash,
+      mustChangePassword: false,
+      createdAt: now,
+      updatedAt: now,
+      created: true,
+    });
+
+    await this.store.updateOne(
+      'people',
+      { id: personId },
+      { $set: { accountId, email, updatedAt: now } },
+    );
+    await this.store.updateOne(
+      'patients',
+      { id: personId },
+      { $set: { accountId, email, updatedAt: now } },
+    );
+    return { accountId };
+  }
+
+  private async attachCaregiver(
+    personId: string,
+    terr: string,
+    body: Record<string, unknown>,
+    now: Date,
+  ): Promise<{ link: Record<string, unknown> } | null> {
+    const wants = parseCaregiverFlag(body.tieneCuidador);
+    const input = normalizeCaregiverInput(body);
+    if (!wants && !input) return null;
+
+    const person = await this.store.findOne('people', { id: personId });
+    const alreadyId = String(
+      person?.caregiverAccountId || person?.caregiverId || '',
+    ).trim();
+
+    if (!wants) {
+      return alreadyId
+        ? {
+            link: {
+              tieneCuidador: true,
+              caregiverAccountId: alreadyId,
+            },
+          }
+        : null;
+    }
+
+    if (alreadyId && (!input?.email || !/@/.test(String(input.email)))) {
+      const link = {
+        tieneCuidador: true,
+        caregiverAccountId: alreadyId,
+        caregiverId: alreadyId,
+        updatedAt: now,
+      };
+      await this.store.updateOne('people', { id: personId }, { $set: link });
+      await this.mirrorCaregiverLinkToPatient(personId, person, link);
+      return { link };
+    }
+
+    if (!input?.firstName || !input?.lastName) {
+      throw new Error('Escriba nombre y apellido del cuidador.');
+    }
+    if (!input.email || !/@/.test(input.email)) {
+      throw new Error(
+        'Para el cuidador escriba un correo válido (ej. nombre@parienta.co).',
+      );
+    }
+    if (!String(input.password || '').trim()) {
+      throw new Error('Defina una contraseña para el acceso del cuidador.');
+    }
+    if (!input.birthDate) {
+      throw new Error('Indique la fecha de nacimiento del cuidador.');
+    }
+    const ageErr = errorEdadCuidador(Number(input.age) || 0);
+    if (ageErr) throw new Error(ageErr);
+
+    const emailTaken = await this.store.findOne('accounts', { email: input.email });
+    if (emailTaken && String(emailTaken.roleId) !== 'cuidador') {
+      throw new Error('Ya existe una cuenta con el correo del cuidador.');
+    }
+    if (
+      emailTaken &&
+      alreadyId &&
+      String(emailTaken.id) !== alreadyId
+    ) {
+      throw new Error('Ya existe una cuenta con el correo del cuidador.');
+    }
+
+    const plain = String(input.password || '').trim();
+    const fullName = String(input.name || `${input.firstName} ${input.lastName}`).trim();
+    const policyErr = passwordPolicyError({
+      password: plain,
+      email: input.email,
+      name: fullName,
+      role: 'Cuidadora / familiar',
+      roleId: 'cuidador',
+    });
+    if (policyErr) throw new Error(policyErr);
+
+    const accountId =
+      alreadyId ||
+      String(emailTaken?.id || `cg${Date.now().toString(36)}`);
+    const passwordHash = await hashPassword(plain);
+    const phone = String(input.phone || '').trim();
+    const accDoc = caregiverAccountDoc({
+      id: accountId,
+      name: fullName,
+      email: input.email,
+      phone,
+      terr,
+      passwordHash,
+      now,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      birthDate: input.birthDate,
+      age: input.age,
+      genero: input.genero,
+      estadoCivil: input.estadoCivil,
+      estrato: input.estrato,
+      place: input.place,
+    });
+    await this.store.upsert('accounts', { id: accountId }, {
+      ...accDoc,
+      createdAt: now,
+    });
+
+    const link = {
+      tieneCuidador: true,
+      caregiverAccountId: accountId,
+      caregiverId: accountId,
+      caregiverName: fullName,
+      caregiverFirstName: input.firstName,
+      caregiverLastName: input.lastName,
+      caregiverEmail: input.email,
+      caregiverPhone: phone,
+      caregiverBirthDate: input.birthDate || '',
+      caregiverAge: input.age || 0,
+      caregiverGenero: input.genero || '',
+      caregiverEstadoCivil: input.estadoCivil || '',
+      caregiverEstrato: input.estrato || '',
+      caregiverPlace: input.place || '',
+      updatedAt: now,
+    };
+    await this.store.updateOne('people', { id: personId }, { $set: link });
+    await this.mirrorCaregiverLinkToPatient(personId, person, link);
+
+    return { link };
+  }
+
+  /** Espejo del vínculo en patients (upsert: alta del gestor aún sin ficha clínica). */
+  private async mirrorCaregiverLinkToPatient(
+    personId: string,
+    person: Record<string, unknown> | null | undefined,
+    link: Record<string, unknown>,
+  ) {
+    const existingPat = await this.store.findOne('patients', { id: personId });
+    await this.store.upsert('patients', { id: personId }, {
+      ...(existingPat || {
+        id: personId,
+        name: person?.name || '',
+        age: person?.age || 0,
+        place: person?.place || person?.terr || '',
+        terr: person?.terr || '',
+        phone: person?.phone || '',
+        expert: person?.expert || '',
+        clin: person?.clin || null,
+        profile: person?.profile || null,
+        status: person?.status || 'Sin evaluación',
+        code: person?.code || '',
+      }),
+      ...link,
+    });
   }
 }

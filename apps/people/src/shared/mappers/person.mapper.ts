@@ -38,5 +38,22 @@ export function publicPerson(doc: Record<string, unknown>) {
     evalPhq: doc.evalPhq ?? null,
     evalDig: doc.evalDig ?? null,
     finalEvalAt: doc.finalEvalAt || null,
+    accountId: doc.accountId || null,
+    tieneCuidador:
+      doc.tieneCuidador === true ||
+      !!(doc.caregiverAccountId || doc.caregiverId),
+    caregiverAccountId: doc.caregiverAccountId || doc.caregiverId || null,
+    caregiverId: doc.caregiverId || doc.caregiverAccountId || null,
+    caregiverName: doc.caregiverName || '',
+    caregiverFirstName: doc.caregiverFirstName || '',
+    caregiverLastName: doc.caregiverLastName || '',
+    caregiverEmail: doc.caregiverEmail || '',
+    caregiverPhone: doc.caregiverPhone || '',
+    caregiverBirthDate: doc.caregiverBirthDate || '',
+    caregiverAge: doc.caregiverAge || 0,
+    caregiverGenero: doc.caregiverGenero || '',
+    caregiverEstadoCivil: doc.caregiverEstadoCivil || '',
+    caregiverEstrato: doc.caregiverEstrato || '',
+    caregiverPlace: doc.caregiverPlace || '',
   };
 }

@@ -1,0 +1,14 @@
+{
+  "id": "cognicion",
+  "nombre": "Tamizaje cognitivo breve (provisional)",
+  "provisional": true,
+  "nota": "Solo señal para derivar; nunca diagnóstico.",
+  "preguntas": [
+    { "i": 1, "texto": "¿Ha notado olvidos que le preocupan a usted o a su familia?", "opciones": [{ "v": 0, "label": "No" }, { "v": 1, "label": "Sí" }] },
+    { "i": 2, "texto": "¿Se ha desorientado en lugares conocidos?", "opciones": [{ "v": 0, "label": "No" }, { "v": 1, "label": "Sí" }] }
+  ],
+  "cortes": [
+    { "max": 0, "nivel": "sin_senal" },
+    { "max": 2, "nivel": "senal" }
+  ]
+}

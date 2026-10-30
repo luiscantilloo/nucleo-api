@@ -1,0 +1,52 @@
+# Configuración del programa Parienta (id: parienta)
+id: parienta
+nombre: Parienta
+version: 0.1.0
+descripcion: Acompañamiento a personas mayores con red de apoyo insuficiente
+
+roles:
+  - id: admin
+    nombre: Administrador
+  - id: gestor
+    nombre: Gestor de campo
+    base: experto
+  - id: clinico
+    nombre: Clínica
+  - id: observador
+    nombre: Observador
+  - id: persona
+    nombre: Persona acompañada
+    base: paciente
+  - id: cuidador
+    nombre: Cuidadora / familiar
+    ve: [resumen, citas, avisos]
+    no_ve: [clinico]
+
+consentimiento:
+  firmantes: [persona, cuidador]
+  puntos:
+    - id: participar
+      obligatorio: true
+      texto: Participar en la evaluación y en el seguimiento
+    - id: datos_ley_1581
+      obligatorio: true
+      texto: Tratamiento de datos personales según la Ley 1581 de 2012
+    - id: contacto_riesgo
+      obligatorio: true
+      texto: Contacto clínico si hay riesgo
+    - id: contacto_cuidador
+      obligatorio_si: cuidador
+      texto: Contacto con el cuidador o familiar
+
+inactividad:
+  horas: 48
+  avisar: [gestor, cuidador]
+  accion: llamada_programada
+
+herramientas: [app, whatsapp, voz, llamada, impreso]
+
+pregunta_ideacion:
+  instrumento: ideacion
+  pregunta: 1
+  corte: "> 0"
+  editable: false

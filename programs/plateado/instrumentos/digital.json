@@ -1,0 +1,15 @@
+{
+  "id": "digital",
+  "nombre": "Capacidad digital",
+  "provisional": true,
+  "preguntas": [
+    { "i": 1, "texto": "¿Tiene celular propio?", "opciones": [{ "v": 0, "label": "No" }, { "v": 1, "label": "Compartido" }, { "v": 2, "label": "Sí" }] },
+    { "i": 2, "texto": "¿Usa WhatsApp?", "opciones": [{ "v": 0, "label": "No" }, { "v": 1, "label": "Con ayuda" }, { "v": 2, "label": "Sí" }] },
+    { "i": 3, "texto": "¿Puede enviar una nota de voz?", "opciones": [{ "v": 0, "label": "No" }, { "v": 1, "label": "Con ayuda" }, { "v": 2, "label": "Sí" }] }
+  ],
+  "cortes": [
+    { "max": 2, "nivel": "baja" },
+    { "max": 4, "nivel": "media" },
+    { "max": 6, "nivel": "alta" }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "nombre": "Prueba",
+  "colores": {
+    "fondo": "#FFFFFF",
+    "tinta": "#111111",
+    "acento": "#336699"
+  }
+}

@@ -1,7 +1,13 @@
 import { execSync } from "node:child_process";
 
-const PORTS = [4000, 4001, 4002, 4003, 4004];
+/** Puertos a liberar: NUCLEO_PORTS=4000,4001,... o por defecto el bloque Plateado. */
+const PORTS = String(process.env.NUCLEO_PORTS || "4000,4001,4002,4003,4004")
+  .split(",")
+  .map((x) => Number(x.trim()))
+  .filter((n) => Number.isFinite(n) && n > 0);
+
 const isWindows = process.platform === "win32";
+const label = PORTS.join("-");
 
 function listeningPids() {
   const pids = new Set();
@@ -28,7 +34,7 @@ function listeningPids() {
         encoding: "utf8",
       });
     } catch {
-      // lsof sale con código 1 cuando nadie escucha ese puerto
+      // nadie escucha
     }
     for (const line of out.split(/\r?\n/)) {
       const pid = Number(line.trim());
@@ -48,13 +54,18 @@ function sleep(ms) {
   execSync(`sleep ${ms / 1000}`);
 }
 
+if (!PORTS.length) {
+  console.error("[kill-ports] NUCLEO_PORTS vacío");
+  process.exit(1);
+}
+
 const pids = listeningPids();
 if (!pids.length) {
-  console.log("[kill-ports] 4000-4004 ya libres");
+  console.log(`[kill-ports] ${label} ya libres`);
   process.exit(0);
 }
 
-console.log(`[kill-ports] matando PID: ${pids.join(", ")}`);
+console.log(`[kill-ports] matando PID en ${label}: ${pids.join(", ")}`);
 for (const pid of pids) {
   try {
     if (isWindows) {
@@ -74,4 +85,4 @@ if (left.length) {
   console.error(`[kill-ports] aún ocupados por: ${left.join(", ")}`);
   process.exit(1);
 }
-console.log("[kill-ports] listo");
+console.log(`[kill-ports] listo (${label})`);

@@ -1,0 +1,16 @@
+{
+  "version": "0.1.0",
+  "provisional": true,
+  "nota": "Matriz provisional. El geriatra entregará la definitiva sin cambiar código.",
+  "ejes": ["riesgo_emocional", "autonomia", "red_apoyo"],
+  "perfiles": [
+    { "id": "PL01", "nombre": "Baja necesidad · buena red", "herramienta_principal": "whatsapp" },
+    { "id": "PL02", "nombre": "Baja necesidad · red débil", "herramienta_principal": "llamada" },
+    { "id": "PL03", "nombre": "Riesgo leve · autonomía alta", "herramienta_principal": "whatsapp" },
+    { "id": "PL04", "nombre": "Riesgo leve · autonomía baja", "herramienta_principal": "visita" },
+    { "id": "PL05", "nombre": "Riesgo moderado · con cuidador", "herramienta_principal": "llamada" },
+    { "id": "PL06", "nombre": "Riesgo moderado · sin cuidador", "herramienta_principal": "visita" },
+    { "id": "PL07", "nombre": "Riesgo alto · prioridad clínica", "herramienta_principal": "clinica" },
+    { "id": "PL08", "nombre": "Crisis / protección", "herramienta_principal": "crisis" }
+  ]
+}

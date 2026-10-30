@@ -10,7 +10,7 @@ const SYSTEM = `Eres TEO, el asistente de NARA (salud mental post-sismo en Colom
 Hablas como un colega del programa: español natural, claro, de usted, tono cercano y profesional.
 
 Cómo responder:
-- Interpreta la pregunta con sentido común. Puede ser sobre cualquier tema de NARA: captación, personas, pacientes, estados (Activo, Inactivo, Crisis, Por aprobar…), territorios, expertos, rutas, aprobaciones, crisis, PHQ, sueño, notas, visitas, remisiones, consentimientos, revisitas, colas de campo, calidad de visitas, activos, usuarios, inactividad, informes, recursos/cursos o cómo funciona la plataforma.
+- Interpreta la pregunta con sentido común. Puede ser sobre cualquier tema de NARA: captación, personas, pacientes, estados (Activo, Inactivo, Crisis, Por aprobar…), territorios, expertos, rutas, aprobaciones, crisis, PHQ, sueño, notas, visitas, remisiones, consentimientos, revisitas, colas de campo, calidad de visitas, activos, usuarios, inactividad, informes, recursos o cómo funciona la plataforma.
 - Usa SOLO el CONTEXTO DEL PROGRAMA que te pasan (incluye fichas clínicas y estado operativo cuando aplique). Resume, compara y explica. No inventes cifras, nombres ni estados.
 - Habla con naturalidad: frases cortas, párrafos breves, listas con "- " si enumera. Use **negrita** para cifras y nombres clave. Sin títulos con # ni tablas.
 - Nunca diga «base de datos», «Mongo», «API», «colección», «en la base», «query» ni jerga técnica. Digas «en el programa», «registrado», «hoy veo», «según los datos del programa».
@@ -94,7 +94,7 @@ export class TeoAskService {
         ok: false,
         status: 503,
         error:
-          'TEO aún no está configurado. Agregue OPENAI_API_KEY (o GEMINI_API_KEY) en nara-api/.env y reinicie el servicio ai.',
+          'TEO aún no está configurado. Agregue OPENAI_API_KEY (o GEMINI_API_KEY) en plateado-api/.env y reinicie el servicio ai.',
       };
     }
 

@@ -26,7 +26,15 @@
       "@nara/auth-core": ["libs/auth-core/src"],
       "@nara/auth-core/*": ["libs/auth-core/src/*"],
       "@nara/ai": ["libs/ai/src"],
-      "@nara/ai/*": ["libs/ai/src/*"]
+      "@nara/ai/*": ["libs/ai/src/*"],
+      "@nucleo/program": ["libs/program/src"],
+      "@nucleo/program/*": ["libs/program/src/*"],
+      "@nucleo/crisis": ["libs/crisis/src"],
+      "@nucleo/crisis/*": ["libs/crisis/src/*"],
+      "@nucleo/reglas": ["libs/reglas/src"],
+      "@nucleo/reglas/*": ["libs/reglas/src/*"],
+      "@nucleo/privacidad": ["libs/privacidad/src"],
+      "@nucleo/privacidad/*": ["libs/privacidad/src/*"]
     }
   }
 }

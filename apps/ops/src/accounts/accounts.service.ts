@@ -2,14 +2,21 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   DEFAULT_PATIENT_MODULES,
   NARA_ROLES,
+  PROGRAM_ORG,
+  caregiverAccountDoc,
   clinicoDelTerritorio,
+  errorEdadCuidador,
+  normalizeCaregiverInput,
+  parseCaregiverFlag,
+  passwordPolicyError,
   ROLE_LABEL_TO_ID,
+  isGestorRoleId,
+  isPersonaRoleId,
   normalizeModuleIds,
   type DocumentStore,
 } from '@nara/common';
 import { DOCUMENT_STORE, MongoStore } from '@nara/database';
 import { SessionService, hashPassword } from '@nara/auth-core';
-import { passwordPolicyError } from '@nara/common';
 import { requireRoles } from '../shared/require-roles';
 import { listCollection } from '../shared/list-collection';
 
@@ -32,7 +39,7 @@ export class AccountsService {
     const terr = String(auth.user.terr || '');
     const rows = await this.store.findMany(
       'accounts',
-      { roleId: 'paciente', terr },
+      { roleId: { $in: ['paciente', 'persona'] }, terr },
       { limit: 20000 },
     );
     return {
@@ -189,12 +196,12 @@ export class AccountsService {
       .split(/\s*[,;/|]\s*|\s+y\s+/i)
       .map((x) => x.trim())
       .filter(Boolean)[0] || '';
-    if (roleId === 'experto') {
+    if (isGestorRoleId(roleId)) {
       if (!singleTerr || /^todos$/i.test(singleTerr)) {
         return {
           ok: false,
           status: 400,
-          error: 'El experto de campo debe tener un único territorio asignado.',
+          error: 'El gestor de campo debe tener un único territorio asignado.',
         };
       }
       if (!(await db.collection('territories').findOne({ name: singleTerr }))) {
@@ -217,35 +224,35 @@ export class AccountsService {
           error:
             'El territorio «' +
             singleTerr +
-            '» ya tiene experto asignado (' +
+            '» ya tiene gestor asignado (' +
             String(other.name || other.id) +
             '). Cada territorio solo puede tener uno.',
         };
       }
     }
 
+    const phoneRaw = String(body.phone || '').trim();
     const setDoc: Record<string, unknown> = {
       id,
       name,
       email: emailRaw,
-      contact,
+      // Correo = acceso; no reutilizar celular en contact/email.
+      contact: emailRaw || contact,
       role,
       roleId,
-      terr:
-        roleId === 'experto'
-          ? singleTerr
-          : singleTerr || 'Todos',
+      terr: isGestorRoleId(roleId) ? singleTerr : singleTerr || 'Todos',
       org:
-        role === 'Observador' ? String(body.org || '').trim() : 'Programa NARA',
+        role === 'Observador' ? String(body.org || '').trim() : PROGRAM_ORG,
       status,
       updatedAt: now,
     };
+    if (phoneRaw) setDoc.phone = phoneRaw;
     if (role === 'Observador') {
       // Un solo rol Observador (sin tipos Financiador / Investigación / Institución).
       setDoc.modules = Array.isArray(body.modules) ? body.modules : [];
     }
     let patientModules = DEFAULT_PATIENT_MODULES.slice();
-    if (role === 'Paciente') {
+    if (role === 'Paciente' || role === 'Persona acompañada' || isPersonaRoleId(roleId)) {
       patientModules = normalizeModuleIds(body.patientModules);
       setDoc.patientModules = patientModules;
     }
@@ -262,7 +269,7 @@ export class AccountsService {
     await col.updateOne({ id }, update, { upsert: true });
 
     let syncedPerson: Record<string, unknown> | null = null;
-    if (roleId === 'paciente') {
+    if (isPersonaRoleId(roleId)) {
       syncedPerson = await this.syncPatient(
         db,
         id,
@@ -285,11 +292,40 @@ export class AccountsService {
             },
           },
         );
+        try {
+          const cg = await this.syncCaregiver(
+            db,
+            String(syncedPerson.id),
+            String(syncedPerson.terr || setDoc.terr || ''),
+            body,
+            now,
+          );
+          if (cg?.person) syncedPerson = { ...syncedPerson, ...cg.person };
+        } catch (err) {
+          return {
+            ok: false,
+            status: 409,
+            error:
+              err instanceof Error
+                ? err.message
+                : 'No se pudo crear la cuenta del cuidador.',
+          };
+        }
       }
     }
-    if (roleId === 'experto') {
+    if (isGestorRoleId(roleId)) {
       try {
-        await this.syncExpert(db, id, name, contact, setDoc.terr, status, now);
+        const phoneForExpert = String(body.phone || '').trim() || undefined;
+        await this.syncExpert(
+          db,
+          id,
+          name,
+          emailRaw,
+          setDoc.terr,
+          status,
+          now,
+          phoneForExpert,
+        );
       } catch (err) {
         return {
           ok: false,
@@ -297,7 +333,7 @@ export class AccountsService {
           error:
             err instanceof Error
               ? err.message
-              : 'No se pudo sincronizar el experto de campo.',
+              : 'No se pudo sincronizar el gestor de campo.',
         };
       }
     }
@@ -336,7 +372,10 @@ export class AccountsService {
     const acc = await db.collection('accounts').findOne({
       terr: terrName,
       status: 'Activo',
-      $or: [{ roleId: 'experto' }, { role: 'Experto de campo' }],
+      $or: [
+        { roleId: { $in: ['experto', 'gestor'] } },
+        { role: { $in: ['Gestor de campo', 'Experto de campo'] } },
+      ],
     });
     if (acc) {
       return {
@@ -644,14 +683,168 @@ export class AccountsService {
     }) as Record<string, unknown>;
   }
 
+  /**
+   * Alta de cuidador solo anidada a la persona acompañada (no desde el select de roles).
+   */
+  private async syncCaregiver(
+    db: Awaited<ReturnType<MongoStore['db']>>,
+    personId: string,
+    terr: string,
+    body: Record<string, unknown>,
+    now: Date,
+  ): Promise<{ person: Record<string, unknown> } | null> {
+    const person =
+      (await db.collection('people').findOne({ id: personId })) ||
+      (await db.collection('patients').findOne({ id: personId }));
+    if (!person) return null;
+
+    const alreadyId = String(
+      person.caregiverAccountId || person.caregiverId || '',
+    ).trim();
+    const wants = parseCaregiverFlag(body.tieneCuidador);
+    const input = normalizeCaregiverInput(body);
+
+    if (!wants && !input) {
+      return {
+        person: {
+          tieneCuidador: !!alreadyId || person.tieneCuidador === true,
+          caregiverAccountId: alreadyId || null,
+        },
+      };
+    }
+    if (!wants) {
+      return {
+        person: {
+          tieneCuidador: !!alreadyId || person.tieneCuidador === true,
+          caregiverAccountId: alreadyId || null,
+        },
+      };
+    }
+    if (alreadyId && (!input?.email || !/@/.test(input.email))) {
+      await db.collection('people').updateOne(
+        { id: personId },
+        { $set: { tieneCuidador: true, updatedAt: now } },
+      );
+      await db.collection('patients').updateOne(
+        { id: personId },
+        { $set: { tieneCuidador: true, updatedAt: now } },
+      );
+      return {
+        person: { tieneCuidador: true, caregiverAccountId: alreadyId },
+      };
+    }
+    if (!input?.firstName || !input?.lastName) {
+      throw new Error('Escriba nombre y apellido del cuidador.');
+    }
+    if (!input.email || !/@/.test(input.email)) {
+      throw new Error(
+        'Para el cuidador escriba un correo válido (ej. nombre@parienta.co).',
+      );
+    }
+    const plain = String(input.password || '').trim();
+    if (!plain) {
+      throw new Error('Defina una contraseña para el acceso del cuidador.');
+    }
+    if (!input.birthDate) {
+      throw new Error('Indique la fecha de nacimiento del cuidador.');
+    }
+    const ageErr = errorEdadCuidador(Number(input.age) || 0);
+    if (ageErr) throw new Error(ageErr);
+
+    const emailTaken = await db.collection('accounts').findOne({
+      email: input.email,
+      ...(alreadyId ? { id: { $ne: alreadyId } } : {}),
+    });
+    if (emailTaken && String(emailTaken.roleId) !== 'cuidador') {
+      throw new Error('Ya existe una cuenta con el correo del cuidador.');
+    }
+
+    const fullName = String(
+      input.name || [input.firstName, input.lastName].filter(Boolean).join(' '),
+    ).trim();
+    const policyErr = passwordPolicyError({
+      password: plain,
+      email: input.email,
+      name: fullName,
+      role: 'Cuidadora / familiar',
+      roleId: 'cuidador',
+    });
+    if (policyErr) throw new Error(policyErr);
+
+    const accountId =
+      alreadyId || String(emailTaken?.id || `cg${Date.now().toString(36)}`);
+    const passwordHash = await hashPassword(plain);
+    const phone = String(input.phone || '').trim();
+    const accDoc = caregiverAccountDoc({
+      id: accountId,
+      name: fullName,
+      email: input.email,
+      phone,
+      terr,
+      passwordHash,
+      now,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      birthDate: input.birthDate,
+      age: input.age,
+      genero: input.genero,
+      estadoCivil: input.estadoCivil,
+      estrato: input.estrato,
+      place: input.place,
+    });
+
+    if (emailTaken && String(emailTaken.id) === accountId) {
+      await db.collection('accounts').updateOne(
+        { id: accountId },
+        { $set: { ...accDoc, status: 'Activo', updatedAt: now } },
+      );
+    } else {
+      await db.collection('accounts').updateOne(
+        { id: accountId },
+        {
+          $set: accDoc,
+          $setOnInsert: { createdAt: now },
+        },
+        { upsert: true },
+      );
+    }
+
+    const link = {
+      tieneCuidador: true,
+      caregiverAccountId: accountId,
+      caregiverId: accountId,
+      caregiverName: fullName,
+      caregiverFirstName: input.firstName,
+      caregiverLastName: input.lastName,
+      caregiverEmail: input.email,
+      caregiverPhone: phone,
+      caregiverBirthDate: input.birthDate || '',
+      caregiverAge: input.age || 0,
+      caregiverGenero: input.genero || '',
+      caregiverEstadoCivil: input.estadoCivil || '',
+      caregiverEstrato: input.estrato || '',
+      caregiverPlace: input.place || '',
+      updatedAt: now,
+    };
+    await db.collection('people').updateOne({ id: personId }, { $set: link });
+    await db.collection('patients').updateOne(
+      { id: personId },
+      { $set: link },
+      { upsert: true },
+    );
+
+    return { person: link };
+  }
+
   private async syncExpert(
     db: Awaited<ReturnType<MongoStore['db']>>,
     id: string,
     name: string,
-    contact: string,
+    email: string,
     terr: unknown,
     status: string,
     now: Date,
+    phone?: string,
   ) {
     const terrName = String(terr || '').trim();
     const existingExpert =
@@ -676,17 +869,24 @@ export class AccountsService {
       }
     }
     const expertKey = existingExpert ? { id: existingExpert.id } : { name };
+    const phoneDigits = String(phone || existingExpert?.phone || '').replace(/\D/g, '');
+    const phoneFmt =
+      phoneDigits.length === 10
+        ? `${phoneDigits.slice(0, 3)} ${phoneDigits.slice(3, 6)} ${phoneDigits.slice(6)}`
+        : String(phone || existingExpert?.phone || '');
+    const $set: Record<string, unknown> = {
+      accountId: id,
+      name,
+      email: email || existingExpert?.email || '',
+      terr: terrName,
+      active: status === 'Activo',
+      updatedAt: now,
+    };
+    if (phoneFmt) $set.phone = phoneFmt;
     await db.collection('experts').updateOne(
       expertKey,
       {
-        $set: {
-          accountId: id,
-          name,
-          phone: contact,
-          terr: terrName,
-          active: status === 'Activo',
-          updatedAt: now,
-        },
+        $set,
         $setOnInsert: {
           id: existingExpert?.id || id,
           target: 9,

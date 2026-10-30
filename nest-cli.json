@@ -89,6 +89,42 @@
       "compilerOptions": {
         "tsConfigPath": "libs/ai/tsconfig.lib.json"
       }
+    },
+    "program": {
+      "type": "library",
+      "root": "libs/program",
+      "entryFile": "index",
+      "sourceRoot": "libs/program/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/program/tsconfig.lib.json"
+      }
+    },
+    "crisis": {
+      "type": "library",
+      "root": "libs/crisis",
+      "entryFile": "index",
+      "sourceRoot": "libs/crisis/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/crisis/tsconfig.lib.json"
+      }
+    },
+    "reglas": {
+      "type": "library",
+      "root": "libs/reglas",
+      "entryFile": "index",
+      "sourceRoot": "libs/reglas/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/reglas/tsconfig.lib.json"
+      }
+    },
+    "privacidad": {
+      "type": "library",
+      "root": "libs/privacidad",
+      "entryFile": "index",
+      "sourceRoot": "libs/privacidad/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/privacidad/tsconfig.lib.json"
+      }
     }
   }
 }

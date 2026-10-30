@@ -1,0 +1,23 @@
+{
+  "nombre": "NARA",
+  "colores": {
+    "amarillo": "#FDCD22",
+    "rosa": "#FFA3D0",
+    "crema": "#F0ECE6",
+    "tinta": "#161413",
+    "blanco": "#FFFFFF",
+    "calma": "#A9D4FF",
+    "crisis": "#B42318",
+    "lineas": "#DCD6CD",
+    "texto2": "#5E5750"
+  },
+  "tipografia": {
+    "titulos": "Fraunces",
+    "texto": "Atkinson Hyperlegible"
+  },
+  "accesibilidad": {
+    "letra_min_px": 16,
+    "boton_min_px": 44
+  },
+  "logo": "/nara/marca/logo/nara-logo.svg"
+}

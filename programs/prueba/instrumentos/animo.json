@@ -1,0 +1,12 @@
+{
+  "id": "animo",
+  "nombre": "Ánimo (prueba)",
+  "preguntas": [
+    { "n": 1, "texto": "¿Se ha sentido sin ganas?", "opciones": [0, 1, 2, 3] },
+    { "n": 2, "texto": "¿Ha dormido mal?", "opciones": [0, 1, 2, 3] }
+  ],
+  "cortes": [
+    { "nivel": "bajo", "max": 2 },
+    { "nivel": "alto", "min": 3 }
+  ]
+}

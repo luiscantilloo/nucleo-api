@@ -2,6 +2,7 @@ import { createHash } from 'crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   hrefForRoleId,
+  isPersonaRoleId,
   resolveNotifKey,
   NARA_ROLES,
   type DocumentStore,
@@ -75,10 +76,13 @@ export class SessionService {
     const path = entry.path ? String(entry.path).slice(0, 200) : null;
     const ip = clientIp(entry.ip);
 
+    const programId = String(process.env.PROGRAM_ID || '').trim() || null;
+
     // Consola para Render (sin correo en claro).
     console.log(
       JSON.stringify({
         kind: 'access_log',
+        programId,
         action,
         status,
         accountId,
@@ -108,6 +112,7 @@ export class SessionService {
         }
         await this.store.upsert('access_log', { id }, {
           id,
+          programId,
           action,
           accountId: null,
           emailHash: null,
@@ -124,6 +129,7 @@ export class SessionService {
       const id = `al-${at}-${Math.random().toString(36).slice(2, 8)}`;
       await this.store.upsert('access_log', { id }, {
         id,
+        programId,
         action,
         accountId,
         emailHash,
@@ -159,8 +165,8 @@ export class SessionService {
       hrefForRoleId(roleId);
     let patientId = account.patientId ? String(account.patientId) : undefined;
 
-    // Paciente sin perfil de ruta (cuestionario): puede autenticarse pero no entra a la app.
-    if (roleId === 'paciente') {
+    // Persona/paciente sin perfil de ruta (cuestionario): puede autenticarse pero no entra a la app.
+    if (isPersonaRoleId(roleId)) {
       const patient =
         (patientId
           ? await this.store.findOne('patients', { id: patientId })

@@ -1,6 +1,6 @@
 /**
  * H-007 (reporte TRL 2026-10-10, SPEC-005): reglas del alta de una persona. Las mismas que aplica el
- * formulario «Nueva persona» del experto (nara-web, useExpertoScreen.ts).
+ * formulario «Nueva persona» del experto. Personas acompañadas: mínimo 60 años.
  */
 export function errorFechaNacimiento(valor: unknown, hoy = new Date()): string | null {
   const v = String(valor ?? '').trim();
@@ -11,7 +11,7 @@ export function errorFechaNacimiento(valor: unknown, hoy = new Date()): string |
   if (d.getTime() > hoy.getTime()) return 'La fecha de nacimiento no puede ser futura.';
   let edad = hoy.getUTCFullYear() - d.getUTCFullYear();
   if (hoy.getUTCMonth() < d.getUTCMonth() || (hoy.getUTCMonth() === d.getUTCMonth() && hoy.getUTCDate() < d.getUTCDate())) edad--;
-  if (edad < 18 || edad > 110) return 'La edad debe estar entre 18 y 110 años.';
+  if (edad < 60 || edad > 110) return 'La edad debe estar entre 60 y 110 años.';
   return null;
 }
 

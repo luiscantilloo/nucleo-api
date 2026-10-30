@@ -1,0 +1,8 @@
+{
+  "version": "0.0.1",
+  "servicios": [
+    { "id": "recordatorio", "nombre": "Recordatorio" },
+    { "id": "llamada", "nombre": "Llamada" },
+    { "id": "visita", "nombre": "Visita" }
+  ]
+}

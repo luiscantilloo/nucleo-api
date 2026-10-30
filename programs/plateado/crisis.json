@@ -1,0 +1,67 @@
+{
+  "version": "0.1.0",
+  "bloqueadas": [
+    {
+      "instrumento": "ideacion",
+      "pregunta": 1,
+      "si": "> 0",
+      "categoria": "riesgo_suicida",
+      "editable": false
+    }
+  ],
+  "categorias": {
+    "riesgo_suicida": {
+      "frases": [
+        "suicid",
+        "matarme",
+        "quitarme la vida",
+        "no quiero vivir",
+        "quiero morir",
+        "mejor muert",
+        "hacerme da",
+        "soy una carga",
+        "ya no sirvo para nada",
+        "mejor no estar",
+        "ser una carga",
+        "quisiera desaparecer",
+        "ya no aguanto"
+      ],
+      "avisar": ["clinico"],
+      "plazo_min": 30,
+      "pausar": true
+    },
+    "abandono_maltrato": {
+      "frases": [
+        "nadie viene",
+        "me pegan",
+        "me maltratan",
+        "me dejan solo",
+        "me dejan sola",
+        "me quitan la plata",
+        "me encierran"
+      ],
+      "avisar": ["clinico", "gestor"],
+      "ruta_obligatoria": "proteccion",
+      "plazo_min": 60,
+      "pausar": true
+    },
+    "urgencia_medica": {
+      "eventos": ["caida_reportada"],
+      "frases": [
+        "me caí",
+        "me cai",
+        "no me puedo levantar",
+        "me duele el pecho",
+        "no puedo respirar"
+      ],
+      "avisar": ["gestor", "cuidador", "clinico"],
+      "plazo_min": 30,
+      "pausar": true
+    }
+  },
+  "texto": {
+    "riesgo_suicida": "{trato}, gracias por decírmelo. Lo que siente es importante. Si está en peligro ahora, llame al 123. Si necesita hablar, Línea 192, opción 4. Voy a avisar al equipo para que le contacten pronto.",
+    "abandono_maltrato": "{trato}, gracias por confiar. Voy a avisar al equipo para activar la ruta de protección. Si está en peligro ahora, llame al 123.",
+    "urgencia_medica": "{trato}, gracias por avisarnos. Voy a alertar al gestor y al equipo. Si es una emergencia, llame al 123 ahora."
+  }
+}

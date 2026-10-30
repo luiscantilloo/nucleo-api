@@ -18,8 +18,26 @@ export class PatientsListService {
       'admin',
       'clinico',
       'experto',
+      'cuidador',
     ]);
     if ('error' in auth) return auth.error;
+
+    // Cuidador: solo fichas vinculadas a su cuenta.
+    if (auth.user.roleId === 'cuidador') {
+      const rows = await this.store.findMany(
+        'patients',
+        {
+          archived: { $ne: true },
+          $or: [
+            { caregiverAccountId: auth.user.id },
+            { caregiverId: auth.user.id },
+          ],
+        },
+        { limit: 20000 },
+      );
+      return { ok: true, status: 200, patients: rows.map(publicPatient) };
+    }
+
     // SPEC-02 FR-02.1 (P-8): experto y clínico solo reciben pacientes de su territorio.
     const scope = terrFilter(auth.user);
     if (!scope) {

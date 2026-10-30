@@ -1,0 +1,9 @@
+{
+  "version": "0.0.1",
+  "por_perfil": {
+    "PR01": ["recordatorio"],
+    "PR02": ["llamada"],
+    "PR03": ["visita"]
+  },
+  "reglas": []
+}

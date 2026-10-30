@@ -1,0 +1,25 @@
+{
+  "modelo": "nara_phq_digital",
+  "nota": "Perfiles operativos P01–P15 = 5 niveles de riesgo PHQ × 3 capacidad digital. El cálculo puede vivir en front heredado; la fuente de verdad del programa es este núcleo.",
+  "ejes": {
+    "riesgo": ["minimo", "leve", "moderado", "moderado_severo", "severo"],
+    "digital": ["baja", "media", "alta"]
+  },
+  "codigos": {
+    "P01": { "riesgo": "minimo", "digital": "baja" },
+    "P02": { "riesgo": "minimo", "digital": "media" },
+    "P03": { "riesgo": "minimo", "digital": "alta" },
+    "P04": { "riesgo": "leve", "digital": "baja" },
+    "P05": { "riesgo": "leve", "digital": "media" },
+    "P06": { "riesgo": "leve", "digital": "alta" },
+    "P07": { "riesgo": "moderado", "digital": "baja" },
+    "P08": { "riesgo": "moderado", "digital": "media" },
+    "P09": { "riesgo": "moderado", "digital": "alta" },
+    "P10": { "riesgo": "moderado_severo", "digital": "baja" },
+    "P11": { "riesgo": "moderado_severo", "digital": "media" },
+    "P12": { "riesgo": "moderado_severo", "digital": "alta" },
+    "P13": { "riesgo": "severo", "digital": "baja" },
+    "P14": { "riesgo": "severo", "digital": "media" },
+    "P15": { "riesgo": "severo", "digital": "alta" }
+  }
+}

@@ -12,7 +12,6 @@ import { redactTextForTeo } from '../context/staff-app-state';
 const SERVICIOS: Record<string, string> = {
   mood: 'registro diario de ánimo',
   ia: 'conversación con TEO',
-  cursos: 'curso guiado',
   videos: 'videos',
   tech: 'técnicas de respiración y relajación',
   wa: 'mensajes por WhatsApp',
@@ -145,7 +144,7 @@ export class TeoChatService {
 
       const system = `${TEO_VOICE}
 
-Temas permitidos: su ruta en NARA y sus servicios, su ánimo, su sueño, las técnicas, los cursos y su acompañamiento. Si pregunta por su ruta, nómbrele los servicios que tiene.
+Temas permitidos: su ruta en NARA y sus servicios, su ánimo, su sueño, las técnicas y su acompañamiento. Si pregunta por su ruta, nómbrele los servicios que tiene.
 Solo si pregunta algo que no tiene que ver con NARA, diga con amabilidad que solo puede ayudar con el programa NARA.
 Use la ficha del paciente de la base; no invente datos clínicos.`;
 

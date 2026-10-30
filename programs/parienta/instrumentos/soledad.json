@@ -1,0 +1,15 @@
+{
+  "id": "soledad",
+  "nombre": "Soledad (provisional)",
+  "provisional": true,
+  "preguntas": [
+    { "i": 1, "texto": "¿Con qué frecuencia se siente solo/a?", "opciones": [{ "v": 0, "label": "Casi nunca" }, { "v": 1, "label": "A veces" }, { "v": 2, "label": "A menudo" }] },
+    { "i": 2, "texto": "¿Siente que le faltan compañía?", "opciones": [{ "v": 0, "label": "Casi nunca" }, { "v": 1, "label": "A veces" }, { "v": 2, "label": "A menudo" }] },
+    { "i": 3, "texto": "¿Se siente aislado/a de los demás?", "opciones": [{ "v": 0, "label": "Casi nunca" }, { "v": 1, "label": "A veces" }, { "v": 2, "label": "A menudo" }] }
+  ],
+  "cortes": [
+    { "max": 2, "nivel": "bajo" },
+    { "max": 4, "nivel": "medio" },
+    { "max": 6, "nivel": "alto" }
+  ]
+}

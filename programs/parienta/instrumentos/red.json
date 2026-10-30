@@ -1,0 +1,15 @@
+{
+  "id": "red",
+  "nombre": "Red de apoyo",
+  "provisional": true,
+  "preguntas": [
+    { "i": 1, "texto": "¿Vive solo/a?", "opciones": [{ "v": 0, "label": "No" }, { "v": 1, "label": "Sí" }] },
+    { "i": 2, "texto": "¿Tiene cuidador o familiar de contacto frecuente?", "opciones": [{ "v": 0, "label": "Sí" }, { "v": 1, "label": "A veces" }, { "v": 2, "label": "No" }] },
+    { "i": 3, "texto": "¿Alguien lo visita al menos una vez por semana?", "opciones": [{ "v": 0, "label": "Sí" }, { "v": 1, "label": "No" }] }
+  ],
+  "cortes": [
+    { "max": 1, "nivel": "buena" },
+    { "max": 2, "nivel": "debil" },
+    { "max": 4, "nivel": "insuficiente" }
+  ]
+}

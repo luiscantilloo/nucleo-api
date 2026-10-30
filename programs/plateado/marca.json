@@ -1,0 +1,30 @@
+{
+  "nombre": "Parienta",
+  "colores": {
+    "noche": "#0B1C2C",
+    "tinta": "#0F1A24",
+    "niebla": "#E8EEF4",
+    "blanco": "#F7F9FB",
+    "plata": "#A8B4C4",
+    "plata_oscura": "#6B7C90",
+    "azul": "#1F4E79",
+    "azul_claro": "#3A7CA5",
+    "teal": "#2A7A6E",
+    "ambar": "#D4A017",
+    "rojo": "#B42318",
+    "lineas": "#C5D0DB",
+    "texto2": "#4A5563"
+  },
+  "tipografia": {
+    "titulos": "Fraunces",
+    "texto": "Atkinson Hyperlegible"
+  },
+  "accesibilidad": {
+    "letra_min_px": 20,
+    "boton_min_px": 56,
+    "boton_escuchar": true,
+    "una_accion_por_pantalla": true
+  },
+  "logo": "/plateado/marca/logo/plateado-logo.svg",
+  "logo_claro": "/plateado/marca/logo/plateado-logo-claro.svg"
+}

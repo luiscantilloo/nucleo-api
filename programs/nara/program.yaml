@@ -1,0 +1,44 @@
+# Programa NARA dentro del núcleo (misma API que Plateado).
+# Arrancar: PROGRAM_ID=nara MONGODB_DB=nucleo_nara
+id: nara
+nombre: NARA
+version: 0.1.0
+descripcion: Acompañamiento en salud mental comunitaria (programa NARA)
+
+roles:
+  - id: admin
+    nombre: Administrador
+  - id: experto
+    nombre: Experto de campo
+  - id: clinico
+    nombre: Clínico
+  - id: observador
+    nombre: Observador
+  - id: paciente
+    nombre: Paciente
+
+consentimiento:
+  firmantes: [paciente]
+  puntos:
+    - id: participar
+      obligatorio: true
+      texto: Participar en la evaluación y en el seguimiento
+    - id: datos_ley_1581
+      obligatorio: true
+      texto: Tratamiento de datos personales según la Ley 1581 de 2012
+    - id: contacto_riesgo
+      obligatorio: true
+      texto: Contacto clínico si hay riesgo
+
+inactividad:
+  horas: 72
+  avisar: [experto]
+  accion: llamada_programada
+
+herramientas: [app, whatsapp, llamada]
+
+pregunta_ideacion:
+  instrumento: ideacion
+  pregunta: 1
+  corte: "> 0"
+  editable: false

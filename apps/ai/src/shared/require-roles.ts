@@ -1,4 +1,5 @@
 import { SessionService, verifySessionToken } from '@nara/auth-core';
+import { roleAllowed } from '@nara/common';
 
 export type AccessMeta = { ip?: string | null; path?: string | null };
 
@@ -46,7 +47,7 @@ export async function requireRoles(
     });
     return { error: { ok: false, status: 403, error: 'Debe cambiar su clave.' } };
   }
-  if (roles?.length && !roles.includes(user.roleId)) {
+  if (roles?.length && !roleAllowed(user.roleId, roles)) {
     void sessions.logAccess({
       action: 'http_403',
       status: 403,

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   APP_STATE_KEY,
   APP_STATE_SLICES,
+  isGestorRoleId,
   mergeAppStateById,
   mergePathOverrides,
   mergePathRequests,
@@ -11,7 +12,13 @@ import {
 import { MongoStore } from '@nara/database';
 import { SessionService } from '@nara/auth-core';
 import { requireRoles } from '../shared/require-roles';
-import { filtrarLectura, idsDelTerritorio, restringirEscritura, type Descarte } from './app-state.policy';
+import {
+  filtrarLectura,
+  idsDelCuidador,
+  idsDelTerritorio,
+  restringirEscritura,
+  type Descarte,
+} from './app-state.policy';
 import { guardarAlerta } from './alerts';
 
 @Injectable()
@@ -25,9 +32,12 @@ export class AppStateService {
     const auth = await requireRoles(this.sessions, token, [
       'admin',
       'experto',
+      'gestor',
       'clinico',
       'observador',
       'paciente',
+      'persona',
+      'cuidador',
     ]);
     if ('error' in auth) return auth.error;
     const db = await this.mongo.db();
@@ -41,9 +51,12 @@ export class AppStateService {
         .findOne({ key: 'main' });
       if (main?.rules) slices.rules = main.rules;
     }
-    const ids = ['experto', 'clinico'].includes(auth.user.roleId)
-      ? await idsDelTerritorio(db, String(auth.user.terr || ''))
-      : null;
+    let ids: Set<string> | null = null;
+    if (isGestorRoleId(auth.user.roleId) || auth.user.roleId === 'clinico') {
+      ids = await idsDelTerritorio(db, String(auth.user.terr || ''));
+    } else if (auth.user.roleId === 'cuidador') {
+      ids = await idsDelCuidador(db, auth.user.id);
+    }
     return { ok: true, status: 200, slices: filtrarLectura(slices, auth.user, ids), keys: [...APP_STATE_SLICES] };
   }
 
@@ -51,8 +64,10 @@ export class AppStateService {
     const auth = await requireRoles(this.sessions, token, [
       'admin',
       'experto',
+      'gestor',
       'clinico',
       'paciente',
+      'persona',
     ]);
     if ('error' in auth) return auth.error;
     if (!body.slices || typeof body.slices !== 'object') {
@@ -63,9 +78,10 @@ export class AppStateService {
     const existing = await db
       .collection('program_settings')
       .findOne({ key: APP_STATE_KEY });
-    const ids = ['experto', 'clinico'].includes(auth.user.roleId)
-      ? await idsDelTerritorio(db, String(auth.user.terr || ''))
-      : null;
+    const ids =
+      isGestorRoleId(auth.user.roleId) || auth.user.roleId === 'clinico'
+        ? await idsDelTerritorio(db, String(auth.user.terr || ''))
+        : null;
     const descartes: Descarte[] = [];
     const slices = restringirEscritura(
       pickAppStateSlices(body.slices as Record<string, unknown>),
@@ -101,18 +117,51 @@ export class AppStateService {
       );
     }
     if (slices.alerts !== undefined || existing?.alerts) {
-      const closedIds = new Set(
-        (Array.isArray(slices.closedToday)
+      const closedRows = (
+        Array.isArray(slices.closedToday)
           ? slices.closedToday
           : Array.isArray(existing?.closedToday)
             ? existing.closedToday
             : []
-        )
-          .map((c: { id?: unknown }) => String(c?.id || ''))
+      ) as Array<{
+        id?: unknown;
+        status?: unknown;
+        patientConfirmedAt?: unknown;
+        attendedAt?: unknown;
+        at?: unknown;
+        sev?: unknown;
+      }>;
+      // Solo ids realmente cerrados. awaiting_patient no mata alertas nuevas del mismo id.
+      const closedIds = new Set(
+        closedRows
+          .filter((c) => {
+            if (!c || c.sev !== 'crisis') return false;
+            const st = String(c.status || '');
+            return !!c.patientConfirmedAt || st === 'closed';
+          })
+          .map((c) => String(c?.id || ''))
           .filter(Boolean),
       );
+      const awaitingById = new Map<string, number>();
+      closedRows.forEach((c) => {
+        if (!c || c.sev !== 'crisis') return;
+        if (String(c.status || '') !== 'awaiting_patient') return;
+        const id = String(c.id || '');
+        if (!id) return;
+        const attended = Number(c.attendedAt || c.at || 0);
+        const prev = awaitingById.get(id);
+        if (prev == null || attended >= prev) awaitingById.set(id, attended);
+      });
       slices.alerts = mergeAppStateById(existing?.alerts, slices.alerts).filter(
-        (a) => !closedIds.has(String(a.id || '')),
+        (a) => {
+          const aid = String(a.id || '');
+          if (closedIds.has(aid)) return false;
+          if (!awaitingById.has(aid)) return true;
+          const alertAt = Number(a.at || 0);
+          const attendedAt = Number(awaitingById.get(aid) || 0);
+          if (alertAt > 0 && attendedAt > 0 && alertAt > attendedAt) return true;
+          return false;
+        },
       );
     }
 
@@ -159,12 +208,21 @@ export class AppStateService {
 
   /** H-002 (SPEC-002 FR-002): `POST /api/alerts` guarda la alerta al momento (201). */
   async crearAlerta(token: string | null, body: Record<string, unknown>) {
-    const auth = await requireRoles(this.sessions, token, ['admin', 'experto', 'clinico', 'paciente']);
+    const auth = await requireRoles(this.sessions, token, [
+      'admin',
+      'experto',
+      'gestor',
+      'clinico',
+      'paciente',
+      'persona',
+      'cuidador',
+    ]);
     if ('error' in auth) return auth.error;
     const db = await this.mongo.db();
-    const ids = ['experto', 'clinico'].includes(auth.user.roleId)
-      ? await idsDelTerritorio(db, String(auth.user.terr || ''))
-      : null;
+    const ids =
+      isGestorRoleId(auth.user.roleId) || auth.user.roleId === 'clinico'
+        ? await idsDelTerritorio(db, String(auth.user.terr || ''))
+        : null;
     const result = await guardarAlerta(db, body, auth.user, ids);
     if (!result.ok && (result.status === 403 || result.status === 404)) {
       void this.sessions.logAccess({

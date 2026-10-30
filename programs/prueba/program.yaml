@@ -1,0 +1,20 @@
+# Programa mínimo para medición V9 (Adenda A): arrancar con PROGRAM_ID=prueba
+# sin cambiar código del núcleo.
+id: prueba
+nombre: Programa de prueba
+version: 0.0.1
+descripcion: 2 instrumentos · 3 perfiles · 3 servicios (solo para V9)
+
+roles:
+  - id: admin
+    nombre: Administrador
+  - id: persona
+    nombre: Persona
+
+herramientas: [app]
+
+pregunta_ideacion:
+  instrumento: animo
+  pregunta: 1
+  corte: "> 0"
+  editable: false

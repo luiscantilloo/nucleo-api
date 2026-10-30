@@ -1,0 +1,20 @@
+{
+  "app": {
+    "nombre": "Parienta",
+    "ingreso_titulo": "Ingresar a Parienta",
+    "teo_nombre": "Aurelia"
+  },
+  "roles": {
+    "gestor": "Gestor",
+    "clinico": "Clínica",
+    "cuidador": "Cuidadora",
+    "persona": "Mi acompañamiento",
+    "admin": "Administración",
+    "observador": "Observador"
+  },
+  "trato": {
+    "m": "solo",
+    "f": "sola",
+    "nb": "sole"
+  }
+}

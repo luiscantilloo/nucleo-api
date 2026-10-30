@@ -1,13 +1,13 @@
 /**
  * Alcance de datos por rol (SPEC-02): lo calcula siempre el servidor.
  * - admin: todo.
- * - experto y clínico: solo su territorio (hoy hay un clínico por territorio).
- * - observador y paciente: ningún registro individual por estas rutas.
+ * - gestor/experto y clínico: solo su territorio.
+ * - observador y persona/paciente: ningún registro individual por estas rutas.
  */
 export type ScopeUser = { id: string; roleId: string; terr?: string | null };
 
 /** Roles que ven registros individuales filtrados por territorio. */
-export const TERR_SCOPED_ROLES = ['experto', 'clinico'];
+export const TERR_SCOPED_ROLES = ['experto', 'gestor', 'clinico'];
 
 /** Filtro de Mongo para colecciones con campo `terr` (patients, people). `null` = sin acceso. */
 export function terrFilter(user: ScopeUser): Record<string, unknown> | null {

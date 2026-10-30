@@ -1,0 +1,8 @@
+{
+  "version": "0.0.1",
+  "perfiles": [
+    { "id": "PR01", "nombre": "Bajo" },
+    { "id": "PR02", "nombre": "Medio" },
+    { "id": "PR03", "nombre": "Alto" }
+  ]
+}

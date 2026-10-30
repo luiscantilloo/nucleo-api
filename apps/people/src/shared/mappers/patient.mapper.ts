@@ -60,6 +60,11 @@ export function publicPatient(doc: Record<string, unknown>) {
     modulesVisible: modulesVisible.length ? modulesVisible : modulesEnabled,
     source: doc.source || '',
     accountId: doc.accountId || null,
+    tieneCuidador:
+      doc.tieneCuidador === true ||
+      !!(doc.caregiverAccountId || doc.caregiverId),
+    caregiverAccountId: doc.caregiverAccountId || doc.caregiverId || null,
+    caregiverId: doc.caregiverId || doc.caregiverAccountId || null,
     crisisLock: doc.crisisLock === true,
     inactiveLock: doc.inactiveLock === true,
     activeAt: doc.activeAt != null ? Number(doc.activeAt) || null : null,
@@ -69,6 +74,35 @@ export function publicPatient(doc: Record<string, unknown>) {
       ? String(doc.crisisAttendedOutcome)
       : null,
     crisisBtnReady: doc.crisisBtnReady === true,
+    /** Cuidador pidió abrir ayuda en la app del paciente (aún sin alerta). */
+    crisisPromptAt:
+      doc.crisisPromptAt != null ? Number(doc.crisisPromptAt) || null : null,
+    /** GPS del cuidador mientras hay prompt/crisis (semilla o refuerzo de la alerta). */
+    crisisPromptLoc: sanitizeCrisisLoc(doc.crisisPromptLoc),
+  };
+}
+
+function sanitizeCrisisLoc(raw: unknown): {
+  lat: number;
+  lng: number;
+  accuracy?: number;
+  at: number;
+  until: number;
+} | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>;
+  const lat = Number(o.lat);
+  const lng = Number(o.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const at = Number(o.at) || Date.now();
+  const until = Number(o.until) || at + 24 * 60 * 60 * 1000;
+  const accuracy = Number(o.accuracy);
+  return {
+    lat,
+    lng,
+    at,
+    until,
+    ...(Number.isFinite(accuracy) ? { accuracy } : {}),
   };
 }
 

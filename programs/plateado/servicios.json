@@ -1,0 +1,16 @@
+{
+  "version": "0.1.0",
+  "provisional": true,
+  "servicios": [
+    { "id": "llamada_acompanamiento", "nombre": "Llamada de acompañamiento" },
+    { "id": "visita_domiciliaria", "nombre": "Visita domiciliaria" },
+    { "id": "grupo_comunitario", "nombre": "Grupo comunitario" },
+    { "id": "actividad_fisica", "nombre": "Actividad física adaptada" },
+    { "id": "acompanamiento_citas", "nombre": "Acompañamiento a citas" },
+    { "id": "recordatorios", "nombre": "Recordatorios" },
+    { "id": "orientacion_cuidador", "nombre": "Orientación al cuidador" },
+    { "id": "atencion_psicologica", "nombre": "Atención psicológica" },
+    { "id": "remision_salud", "nombre": "Remisión a salud" },
+    { "id": "proteccion", "nombre": "Ruta de protección" }
+  ]
+}

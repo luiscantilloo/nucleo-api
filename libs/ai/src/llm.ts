@@ -36,6 +36,6 @@ export async function llmComplete(prompt: string, opts?: LlmCompleteOpts) {
     return { ...r, provider: 'gemini' as const };
   }
   throw new Error(
-    'Falta OPENAI_API_KEY o GEMINI_API_KEY en el entorno de nara-api.',
+    'Falta OPENAI_API_KEY o GEMINI_API_KEY en el entorno de plateado-api.',
   );
 }

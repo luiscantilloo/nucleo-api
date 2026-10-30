@@ -22,7 +22,7 @@ const LOCK_ERROR = 'Demasiados intentos. Espere unos minutos e intente de nuevo.
 const LOGIN_ERROR = 'Correo o contraseña incorrectos.';
 // SPEC-01: clave temporal de 6 dígitos que vence en 24 h; claves conocidas que obligan a cambiar.
 const TEMP_TTL_MS = 24 * 60 * 60 * 1000;
-const CLAVES_PROHIBIDAS = ['NaraPrueba#2026', 'AdminNara2026'];
+const CLAVES_PROHIBIDAS = ['ParientaPrueba#2026', 'AdminParienta2026'];
 // Hash ficticio para comparar en el mismo tiempo cuando la cuenta no existe (FR-01.6 de la spec completa).
 const HASH_FICTICIO = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8Ywq6XxV9x3d0Ffk8r0b6W5s8Yb1nG';
 
@@ -163,7 +163,11 @@ export class LoginService {
     );
     // T-03: si cerró sesión en este mismo segundo, el token nuevo se emite un segundo después para no quedar revocado.
     const extra = account.logoutAt && Math.floor(now / 1000) * 1000 <= Number(account.logoutAt) ? 1 : 0;
-    const token = signSessionToken(user.id, SESSION_MAX_AGE_SEC + extra);
+    const token = signSessionToken(
+      user.id,
+      SESSION_MAX_AGE_SEC + extra,
+      process.env.PROGRAM_ID || 'parienta',
+    );
     await this.sessions.logAccess({
       action: 'login_ok',
       email,
