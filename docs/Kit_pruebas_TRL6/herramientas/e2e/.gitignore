@@ -1,8 +1,0 @@
-node_modules/
-salida/
-test-results/
-playwright-report/
-config.json
-config.nara.json
-config.parienta.json
-*.local.json
