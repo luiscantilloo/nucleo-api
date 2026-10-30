@@ -39,3 +39,17 @@ test('T2: acepta admin 12+ sin identidad', () => {
   });
   assert.equal(err, null);
 });
+
+test('T2: rechaza claves comunes y repetición (S7)', () => {
+  for (const password of ['password', 'aaaaaaaaaaaa', '12345678']) {
+    const err = passwordPolicyError({
+      password,
+      email: 'obs@ejemplo.invalid',
+      name: 'Observador',
+      role: 'Observador',
+      roleId: 'observador',
+    });
+    assert.ok(err, `debía rechazar ${password}`);
+    assert.match(String(err), /débil|predecible/i);
+  }
+});

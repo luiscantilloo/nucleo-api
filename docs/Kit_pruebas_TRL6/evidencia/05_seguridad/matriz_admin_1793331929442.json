@@ -1,0 +1,50 @@
+[
+  {
+    "rol": "admin",
+    "metodo": "GET",
+    "ruta": "/api/auth/me",
+    "esperado": 200,
+    "real": 200,
+    "ok": true
+  },
+  {
+    "rol": "admin",
+    "metodo": "GET",
+    "ruta": "/api/accounts",
+    "esperado": 200,
+    "real": 200,
+    "ok": true
+  },
+  {
+    "rol": "admin",
+    "metodo": "GET",
+    "ruta": "/api/patients",
+    "esperado": 200,
+    "real": 200,
+    "ok": true
+  },
+  {
+    "rol": "admin",
+    "metodo": "GET",
+    "ruta": "/api/people",
+    "esperado": 200,
+    "real": 200,
+    "ok": true
+  },
+  {
+    "rol": "admin",
+    "metodo": "GET",
+    "ruta": "/api/territories",
+    "esperado": 200,
+    "real": 200,
+    "ok": true
+  },
+  {
+    "rol": "admin",
+    "metodo": "GET",
+    "ruta": "/api/assets",
+    "esperado": 200,
+    "real": 200,
+    "ok": true
+  }
+]

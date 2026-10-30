@@ -1,0 +1,19 @@
+{
+  "prefijo": "TRL-QA-202610300357-",
+  "creados": [
+    {
+      "tipo": "person",
+      "id": "pmvufym8a"
+    },
+    {
+      "tipo": "alert",
+      "id": "a-pmvufym8a",
+      "pid": "pmvufym8a"
+    },
+    {
+      "tipo": "alert-cuidador",
+      "id": "a-pmvufvu59",
+      "pid": "pmvufvu59"
+    }
+  ]
+}

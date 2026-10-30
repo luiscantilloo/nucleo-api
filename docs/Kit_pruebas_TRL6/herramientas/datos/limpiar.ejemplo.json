@@ -1,0 +1,11 @@
+{
+  "_nota": "Copiar a limpiar.json. Un recurso por cada tipo de dato que crean las pruebas (registros, cuentas de prueba de claves.spec.js, datos sembrados…). 'accion' puede borrar (DELETE) o archivar/desactivar (PATCH con cuerpo). Las cuentas creadas por claves.spec.js usan correos @ejemplo.invalid con el prefijo.",
+  "apiUrl": "https://api.ejemplo.com",
+  "ingreso": { "ruta": "/api/auth/login", "cuerpo": { "email": "{email}", "password": "{password}" }, "sesion": "cookie", "campoToken": "token" },
+  "rol": "admin",
+  "email": "prueba.admin@ejemplo.com",
+  "recursos": [
+    { "buscar": "/api/registros?q={prefijo}", "lista": "items", "campoId": "id", "campoNombre": "nombre", "accion": { "metodo": "DELETE", "ruta": "/api/registros/{id}" } },
+    { "buscar": "/api/usuarios?q={prefijo}", "lista": "usuarios", "campoId": "id", "campoNombre": "email", "accion": { "metodo": "PATCH", "ruta": "/api/usuarios/{id}", "cuerpo": { "activo": false } } }
+  ]
+}

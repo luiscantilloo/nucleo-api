@@ -5,12 +5,34 @@
 
 const SHARED_PRIVILEGED = ['naraprueba#2026', 'adminnara2026'];
 
+/** Claves demasiado comunes / triviales (TRL S7). */
+const COMMON_WEAK = new Set([
+  'password',
+  'password1',
+  'password123',
+  '12345678',
+  '123456789',
+  '1234567890',
+  'qwertyui',
+  'qwerty123',
+  'abcdefgh',
+  'abcdefghi',
+  'letmein1',
+  'welcome1',
+  'admin123',
+  'clave2026',
+]);
+
 function norm(value: string) {
   return String(value || '')
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
     .toLowerCase()
     .trim();
+}
+
+function isRepeatedChar(password: string) {
+  return password.length >= 8 && /^(.)\1+$/.test(password);
 }
 
 function fragments(email: string, name: string): string[] {
@@ -77,6 +99,10 @@ export function passwordPolicyError(input: PasswordPolicyInput): string | null {
   }
 
   const passN = norm(password);
+  if (COMMON_WEAK.has(passN) || isRepeatedChar(password)) {
+    return 'La contraseña es demasiado débil o predecible. Elija una distinta.';
+  }
+
   for (const frag of fragments(String(input.email || ''), String(input.name || ''))) {
     if (frag && passN.includes(frag)) {
       return 'La contraseña no puede contener el correo, la parte antes de @ ni el nombre de la cuenta.';

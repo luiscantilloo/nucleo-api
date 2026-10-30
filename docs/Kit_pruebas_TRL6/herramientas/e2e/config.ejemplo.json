@@ -1,0 +1,201 @@
+{
+  "_nota": "Copiar a config.json y llenar. Sin claves: cada clave va en la variable de entorno PASS_<ROL> (por ejemplo PASS_ADMIN).",
+  "salud": "/api/health",
+  "campoVersion": "commit",
+  "ingreso": {
+    "api": {
+      "ruta": "/api/auth/login",
+      "cuerpo": {
+        "email": "{email}",
+        "password": "{password}"
+      },
+      "sesion": "cookie",
+      "nombreCookie": "session",
+      "campoToken": "token"
+    },
+    "ui": {
+      "ruta": "/login",
+      "etiquetaCorreo": "Correo",
+      "etiquetaClave": "Contraseña",
+      "boton": "Ingresar",
+      "textoErrorGenerico": "incorrect"
+    }
+  },
+  "roles": [
+    {
+      "id": "admin",
+      "email": "prueba.admin@ejemplo.com",
+      "inicio": "/admin"
+    },
+    {
+      "id": "operador",
+      "email": "prueba.operador@ejemplo.com",
+      "inicio": "/operador"
+    },
+    {
+      "id": "operador2",
+      "email": "prueba.operador2@ejemplo.com",
+      "inicio": "/operador",
+      "_nota": "Segunda cuenta del mismo rol, solo para la prueba IDOR (S1)"
+    },
+    {
+      "id": "usuario",
+      "email": "prueba.usuario@ejemplo.com",
+      "inicio": "/inicio"
+    }
+  ],
+  "rutasProtegidas": [
+    "/api/auth/me",
+    "/api/usuarios"
+  ],
+  "cabecerasEsperadas": [
+    "strict-transport-security",
+    "x-content-type-options"
+  ],
+  "idor": {
+    "_nota": "S1. Dos cuentas del MISMO rol (agregue el segundo rol en 'roles', por ejemplo 'operador2', con PASS_OPERADOR2) y un rol distinto sin permiso.",
+    "dueno": "operador",
+    "otroMismoRol": "operador2",
+    "otroRol": "usuario",
+    "crear": {
+      "ruta": "/api/registros",
+      "cuerpo": {
+        "nombre": "{prefijo}IDOR"
+      }
+    },
+    "campoId": "id",
+    "leer": "/api/registros/{id}",
+    "modificar": {
+      "metodo": "PATCH",
+      "ruta": "/api/registros/{id}",
+      "cuerpo": {
+        "nombre": "{prefijo}IDOR-modificado"
+      }
+    },
+    "borrar": "/api/registros/{id}",
+    "idsInventados": [
+      "1",
+      "2",
+      "000000000000000000000000"
+    ]
+  },
+  "inyeccion": {
+    "_nota": "S8. Endpoints de escritura con sus campos de texto. Solo datos de prueba.",
+    "objetivos": [
+      {
+        "rol": "operador",
+        "metodo": "POST",
+        "ruta": "/api/registros",
+        "cuerpoBase": {
+          "nombre": "{prefijo}INY"
+        },
+        "campos": [
+          "nombre"
+        ],
+        "leerDespues": "/api/registros?q={prefijo}"
+      }
+    ]
+  },
+  "bloqueo": {
+    "_nota": "S6. Cuenta creada SOLO para esta prueba, que no está en 'roles': queda bloqueada. Clave en PASS_BLOQUEO. Se corre con BLOQUEO=1.",
+    "email": "prueba.bloqueo@ejemplo.com",
+    "intentos": 6,
+    "textoBloqueo": "bloque|intent|espere"
+  },
+  "claves": {
+    "_nota": "S7. Crear cuentas con claves débiles: todas deben rechazarse (4xx). Solo con el rol autorizado a crear cuentas.",
+    "rolCreador": "admin",
+    "ruta": "/api/usuarios",
+    "cuerpo": {
+      "email": "{email}",
+      "password": "{password}",
+      "rol": "usuario"
+    },
+    "debiles": [
+      "123456",
+      "password",
+      "abc",
+      "{email}",
+      "Clave2026",
+      "aaaaaaaaaaaa"
+    ],
+    "aceptadaDeControl": "Tr3s-Palabras-Largas-{aleatorio}"
+  },
+  "webhooks": {
+    "_nota": "S13. TODOS los webhooks entrantes en uso (aunque la integración esté fuera de C6). El secreto correcto va en la variable indicada; el caso positivo es obligatorio. Para firma HMAC, agregar \"firma\": { \"algoritmo\": \"sha256\", \"prefijo\": \"sha256=\" }",
+    "lista": [
+      {
+        "nombre": "webhook de ejemplo",
+        "metodo": "POST",
+        "url": "https://servicio.ejemplo.com/webhook",
+        "cabecera": "x-secreto",
+        "variableSecreto": "SECRETO_WEBHOOK",
+        "cuerpo": {
+          "prueba": true
+        }
+      }
+    ]
+  },
+  "interoperabilidad": {
+    "_nota": "C6. Una operación real por integración, con la cuenta de prueba. Se registra estado, tiempo y un resumen de la respuesta (sin datos personales).",
+    "lista": [
+      {
+        "integracion": "Proveedor de IA",
+        "rol": "usuario",
+        "metodo": "POST",
+        "ruta": "/api/chat",
+        "cuerpo": {
+          "mensaje": "Hola, esto es una prueba de interoperabilidad"
+        },
+        "esperado": 200,
+        "campoResumen": "texto"
+      }
+    ]
+  },
+  "perdidaRed": {
+    "rol": "operador",
+    "ruta": "/operador/nuevo",
+    "abrir": [],
+    "campos": [
+      {
+        "etiqueta": "Nombre",
+        "valor": "{prefijo}Nombre"
+      },
+      {
+        "etiqueta": "Descripción",
+        "valor": "Registro de prueba de pérdida de red"
+      }
+    ],
+    "boton": "Guardar",
+    "textoAviso": "conexi|red|intent",
+    "busqueda": {
+      "ruta": "/api/registros?q={prefijo}",
+      "lista": "items",
+      "campoNombre": "nombre"
+    }
+  },
+  "capturas": {
+    "_nota": "Capturas por rol para los manuales y la documentación. Solo cuentas y datos de prueba.",
+    "pantallas": [
+      {
+        "rol": "admin",
+        "rutas": [
+          "/admin"
+        ]
+      },
+      {
+        "rol": "operador",
+        "rutas": [
+          "/operador",
+          "/operador/nuevo"
+        ]
+      },
+      {
+        "rol": "usuario",
+        "rutas": [
+          "/inicio"
+        ]
+      }
+    ]
+  }
+}

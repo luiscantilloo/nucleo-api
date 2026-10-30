@@ -1,0 +1,69 @@
+{
+  "prefijo": "TRL-QA-202610300345-",
+  "resultados": [
+    {
+      "quien": "admin2",
+      "metodo": "POST",
+      "ruta": "/api/people/{id}/archive",
+      "estado": 200,
+      "ok": true,
+      "nota": "privilegio-compartido-mismo-rol"
+    },
+    {
+      "quien": "admin2",
+      "metodo": "POST",
+      "ruta": "/api/people/1/archive",
+      "estado": 404,
+      "ok": true
+    },
+    {
+      "quien": "admin2",
+      "metodo": "POST",
+      "ruta": "/api/people/2/archive",
+      "estado": 404,
+      "ok": true
+    },
+    {
+      "quien": "admin2",
+      "metodo": "POST",
+      "ruta": "/api/people/000000000000000000000000/archive",
+      "estado": 404,
+      "ok": true
+    },
+    {
+      "quien": "paciente",
+      "metodo": "POST",
+      "ruta": "/api/people/{id}/archive",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "quien": "paciente",
+      "metodo": "POST",
+      "ruta": "/api/people/1/archive",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "quien": "paciente",
+      "metodo": "POST",
+      "ruta": "/api/people/2/archive",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "quien": "paciente",
+      "metodo": "POST",
+      "ruta": "/api/people/000000000000000000000000/archive",
+      "estado": 403,
+      "ok": true
+    },
+    {
+      "quien": "admin (dueño)",
+      "metodo": "POST",
+      "ruta": "/api/people/{id}/archive",
+      "estado": 200,
+      "ok": true
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "prefijo": "TRL-QA-202610300356-",
+  "resultados": [
+    {
+      "campo": "name",
+      "carga": "<script>alert(1)</script>",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "name",
+      "carga": "\"><img src=x onerror=alert(1)>",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "name",
+      "carga": "javascript:alert(1)",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "name",
+      "carga": "' OR '1'='1",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "name",
+      "carga": "'; DROP TABLE x; --",
+      "estado": 403,
+      "sin5xx": true
+    },
+    {
+      "campo": "name",
+      "carga": "{\"$ne\":null}",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "name",
+      "carga": "{\"$gt\":\"\"}",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "name",
+      "carga": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "firstName",
+      "carga": "<script>alert(1)</script>",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "firstName",
+      "carga": "\"><img src=x onerror=alert(1)>",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "firstName",
+      "carga": "javascript:alert(1)",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "firstName",
+      "carga": "' OR '1'='1",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "firstName",
+      "carga": "'; DROP TABLE x; --",
+      "estado": 403,
+      "sin5xx": true
+    },
+    {
+      "campo": "firstName",
+      "carga": "{\"$ne\":null}",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "firstName",
+      "carga": "{\"$gt\":\"\"}",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "firstName",
+      "carga": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "lastName",
+      "carga": "<script>alert(1)</script>",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "lastName",
+      "carga": "\"><img src=x onerror=alert(1)>",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "lastName",
+      "carga": "javascript:alert(1)",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "lastName",
+      "carga": "' OR '1'='1",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "lastName",
+      "carga": "'; DROP TABLE x; --",
+      "estado": 403,
+      "sin5xx": true
+    },
+    {
+      "campo": "lastName",
+      "carga": "{\"$ne\":null}",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "lastName",
+      "carga": "{\"$gt\":\"\"}",
+      "estado": 200,
+      "sin5xx": true
+    },
+    {
+      "campo": "lastName",
+      "carga": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "estado": 200,
+      "sin5xx": true
+    }
+  ],
+  "reflejoSinEscapar": false
+}

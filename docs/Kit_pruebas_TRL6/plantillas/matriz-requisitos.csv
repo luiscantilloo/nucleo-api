@@ -1,0 +1,5 @@
+id_requisito,requisito,rol,prueba_que_lo_verifica,caso,resultado,evidencia,observaciones
+RF-01,,,"C1 e2e",,,evidencia/01_integracion/,
+RF-02,,,"C2 UAT",,,evidencia/02-08_usuarios/,
+RNF-01,"p95 < 2 s a la concurrencia objetivo",,"C3 carga",,,evidencia/03_carga/,
+RNF-02,"Solo cada rol accede a lo suyo",,"C5 S2 matriz de acceso",,,evidencia/05_seguridad/,
