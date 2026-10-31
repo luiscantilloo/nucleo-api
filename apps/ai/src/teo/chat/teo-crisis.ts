@@ -2,7 +2,7 @@ import {
   crisisCheck as crisisCheckNucleo,
   esRespuestaCrisis as esRespuestaCrisisNucleo,
   textoDeCrisis as textoPlantilla,
-} from '../../../../../libs/crisis/src/detect';
+} from '@nucleo/crisis';
 import { assistantBrand } from '../prompts/assistant-brand';
 
 // Igual que APP_STATE_KEY de @nara/common (patterns.ts).

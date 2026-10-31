@@ -20,9 +20,9 @@ export function recordOutbound(ev: Omit<OutboundEvidence, 'at'>) {
 
 /** Devuelve y limpia el último outbound (o null). */
 export function takeOutbound(): OutboundEvidence | null {
-  const x = last;
+  const captured = last;
   last = null;
-  return x;
+  return captured;
 }
 
 export function captureOutboundEnabled() {
