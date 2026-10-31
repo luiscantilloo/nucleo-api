@@ -3,6 +3,7 @@ import {
   openaiModelsToTry,
   type OpenAICompleteOpts,
 } from './openai.config';
+import { recordOutbound } from '../outbound-evidence';
 
 type OpenAIError = Error & { status?: number; capacity?: boolean };
 
@@ -48,6 +49,13 @@ async function callModel(
   } else {
     body.max_completion_tokens = max;
   }
+
+  recordOutbound({
+    destino: 'openai',
+    url: 'https://api.openai.com/v1/chat/completions',
+    method: 'POST',
+    body: { ...body },
+  });
 
   const started = Date.now();
   const res = await fetch('https://api.openai.com/v1/chat/completions', {

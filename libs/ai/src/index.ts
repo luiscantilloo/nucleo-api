@@ -15,3 +15,9 @@ export {
 } from './openai';
 export { llmComplete, isLlmConfigured, type LlmCompleteOpts } from './llm';
 export { callN8nTeo, n8nTeoHeaders, type N8nTeoPayload } from './n8n-teo';
+export {
+  takeOutbound,
+  captureOutboundEnabled,
+  redactOutbound,
+  type OutboundEvidence,
+} from './outbound-evidence';

@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { MongoStore } from '@nara/database';
 import { SessionService } from '@nara/auth-core';
-import { llmComplete, isLlmConfigured, callN8nTeo } from '@nara/ai';
+import {
+  llmComplete,
+  isLlmConfigured,
+  callN8nTeo,
+  takeOutbound,
+  captureOutboundEnabled,
+  redactOutbound,
+} from '@nara/ai';
 import { requireRoles } from '../../shared/require-roles';
 import { assistantVoice } from '../prompts/teo-voice';
 import { assistantBrand } from '../prompts/assistant-brand';
@@ -128,18 +135,28 @@ export class TeoChatService {
         history: history || '',
         profile,
       });
+      const withOutbound = <T extends Record<string, unknown>>(r: T): T => {
+        if (!captureOutboundEnabled()) return r;
+        const raw = takeOutbound();
+        if (raw) return { ...r, outbound: redactOutbound(raw) };
+        return r;
+      };
+
       if (n8nText) {
         if (esRespuestaCrisis(n8nText)) {
-          return { ...(await escalar('clasificador IA')), provider: 'n8n' };
+          return withOutbound({
+            ...(await escalar('clasificador IA')),
+            provider: 'n8n',
+          });
         }
-        return {
+        return withOutbound({
           ok: true,
           status: 200,
           text: n8nText.trim(),
           provider: 'n8n',
           assistant: brand.assistantName,
           program: brand.programName,
-        };
+        });
       }
 
       if (!isLlmConfigured()) {
@@ -174,8 +191,22 @@ ${brand.assistantName}:`;
         temperature: 0.55,
         maxTokens: 400,
       });
-      if (esRespuestaCrisis(text)) return { ...(await escalar('clasificador IA')), model, provider };
-      return { ok: true, status: 200, text: text.trim(), model, provider, assistant: brand.assistantName, program: brand.programName };
+      if (esRespuestaCrisis(text)) {
+        return withOutbound({
+          ...(await escalar('clasificador IA')),
+          model,
+          provider,
+        });
+      }
+      return withOutbound({
+        ok: true,
+        status: 200,
+        text: text.trim(),
+        model,
+        provider,
+        assistant: brand.assistantName,
+        program: brand.programName,
+      });
     } catch (err) {
       const brand = assistantBrand();
       const message = err instanceof Error ? err.message : `Error en ${brand.assistantName}`;

@@ -1,7 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { MongoStore } from '@nara/database';
 import { SessionService } from '@nara/auth-core';
-import { llmComplete, isLlmConfigured } from '@nara/ai';
+import {
+  llmComplete,
+  isLlmConfigured,
+  takeOutbound,
+  captureOutboundEnabled,
+  redactOutbound,
+} from '@nara/ai';
 import { requireRoles } from '../../shared/require-roles';
 import { buildContext } from '../context/context.builder';
 import { teoRateLimitError, teoRateLimitOk } from '../rate-limit';
@@ -121,7 +127,7 @@ Responda como ${brand.assistantName} de ${brand.programName}: natural, coherente
         .replace(/\s{2,}/g, ' ')
         .replace(/\s+([.,;:])/g, '$1')
         .trim();
-      return {
+      const out: Record<string, unknown> = {
         ok: true,
         status: 200,
         text: clean || text,
@@ -130,6 +136,11 @@ Responda como ${brand.assistantName} de ${brand.programName}: natural, coherente
         assistant: brand.assistantName,
         program: brand.programName,
       };
+      if (captureOutboundEnabled()) {
+        const raw = takeOutbound();
+        if (raw) out.outbound = redactOutbound(raw);
+      }
+      return out;
     } catch (err) {
       const message = err instanceof Error ? err.message : `Error en ${brand.assistantName}`;
       return {
