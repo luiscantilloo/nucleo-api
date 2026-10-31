@@ -1,6 +1,6 @@
 import type { Db } from 'mongodb';
 import { APP_STATE_KEY } from '@nara/common';
-import { APP_OVERVIEW } from '../prompts/app-overview';
+import { appOverview } from '../prompts/app-overview';
 import { summarizeAppStateForTeo } from './staff-app-state';
 import { toTeoPatient } from './teo-patient';
 
@@ -145,7 +145,7 @@ export async function buildStaffContext(
     : {};
 
   const parts: string[] = [
-    APP_OVERVIEW,
+    appOverview(),
     `Quién pregunta: rol ${roleId}` +
       (scope.accountName ? ` (${scope.accountName})` : '') +
       (scope.expertName ? `, experto «${scope.expertName}»` : '') +

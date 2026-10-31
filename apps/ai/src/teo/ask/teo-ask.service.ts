@@ -5,26 +5,16 @@ import { llmComplete, isLlmConfigured } from '@nara/ai';
 import { requireRoles } from '../../shared/require-roles';
 import { buildContext } from '../context/context.builder';
 import { teoRateLimitError, teoRateLimitOk } from '../rate-limit';
-
-const SYSTEM = `Eres TEO, el asistente de NARA (salud mental post-sismo en Colombia).
-Hablas como un colega del programa: español natural, claro, de usted, tono cercano y profesional.
-
-Cómo responder:
-- Interpreta la pregunta con sentido común. Puede ser sobre cualquier tema de NARA: captación, personas, pacientes, estados (Activo, Inactivo, Crisis, Por aprobar…), territorios, expertos, rutas, aprobaciones, crisis, PHQ, sueño, notas, visitas, remisiones, consentimientos, revisitas, colas de campo, calidad de visitas, activos, usuarios, inactividad, informes, recursos o cómo funciona la plataforma.
-- Usa SOLO el CONTEXTO DEL PROGRAMA que te pasan (incluye fichas clínicas y estado operativo cuando aplique). Resume, compara y explica. No inventes cifras, nombres ni estados.
-- Habla con naturalidad: frases cortas, párrafos breves, listas con "- " si enumera. Use **negrita** para cifras y nombres clave. Sin títulos con # ni tablas.
-- Nunca diga «base de datos», «Mongo», «API», «colección», «en la base», «query» ni jerga técnica. Digas «en el programa», «registrado», «hoy veo», «según los datos del programa».
-- Si falta un dato: «Eso aún no lo tengo registrado en el programa» o «Por ahora no veo ese detalle». Ofrezca otra forma de preguntar.
-- Priorice cifras concretas y una breve interpretación (qué implica, qué conviene mirar).
-- Saludos y cortesía: responda con naturalidad y ofrezca ayuda con NARA.
-- Si la pregunta es claramente ajena a NARA, responda exactamente:
-«Solo puedo ayudar con temas del programa NARA. Reformule su pregunta sobre la plataforma o los datos del programa.»
-- No dé diagnósticos clínicos ni cambie rutas. No revele contraseñas ni secretos.
-- Observadores: solo agregados, nunca datos personales identificables.
-- Extensión: lo necesario para ser útil (hasta ~320 palabras). Si pide un resumen corto, sea breve.`;
+import { assistantBrand, staffAskSystem } from '../prompts/assistant-brand';
 
 /** Saludos / presentación — no pasar por el rechazo de tema. */
 function greetingReply(question: string): string | null {
+  const brand = assistantBrand();
+  const { assistantName, programName } = brand;
+  const alias =
+    assistantName.toLowerCase() === 'teo'
+      ? 'teo|nara'
+      : `${assistantName.toLowerCase()}|parienta|teo`;
   const t = question
     .trim()
     .toLowerCase()
@@ -34,22 +24,20 @@ function greetingReply(question: string): string | null {
     .replace(/\s+/g, ' ')
     .trim();
   if (!t || t.length > 56) return null;
-  const greeting =
-    /^(hola|holi|hey|hi|hello|buenas|buenos dias|buenas tardes|buenas noches|saludos)(\s+(teo|nara))?(\s+(como estas|que tal|que hay))?$/.test(
-      t,
-    );
-  const who =
-    /^(quien eres|quien es teo|que eres|que haces|como te llamas|presentate|que puedes hacer|en que me puedes ayudar)$/.test(
-      t,
-    );
+  const greeting = new RegExp(
+    `^(hola|holi|hey|hi|hello|buenas|buenos dias|buenas tardes|buenas noches|saludos)(\\s+(${alias}))?(\\s+(como estas|que tal|que hay))?$`,
+  ).test(t);
+  const who = new RegExp(
+    `^(quien eres|quien es ${assistantName.toLowerCase()}|quien es teo|quien es aurelia|que eres|que haces|como te llamas|presentate|que puedes hacer|en que me puedes ayudar)$`,
+  ).test(t);
   const thanks = /^(gracias|muchas gracias|ok gracias|perfecto gracias)$/.test(
     t,
   );
   if (greeting) {
-    return '¡Hola! Soy TEO. Pregúnteme por captación, personas, rutas, territorios, crisis o lo que necesite del programa.';
+    return `¡Hola! Soy ${assistantName}. Pregúnteme por captación, personas, rutas, territorios, crisis o lo que necesite del programa.`;
   }
   if (who) {
-    return 'Soy TEO, su asistente en NARA. Puedo orientarle con los datos del programa: personas, pacientes, territorios, equipos, rutas, crisis y operaciones. ¿Qué necesita?';
+    return `Soy ${assistantName}, su asistente en ${programName}. Puedo orientarle con los datos del programa: personas, pacientes, territorios, equipos, rutas, crisis y operaciones. ¿Qué necesita?`;
   }
   if (thanks) {
     return 'Con gusto. Cuando quiera, pregunte otra vez.';
@@ -80,21 +68,29 @@ export class TeoAskService {
     if ('error' in auth) return auth.error;
     if (!teoRateLimitOk(auth.user.id)) return teoRateLimitError(auth.user.id);
 
+    const brand = assistantBrand();
     const question = String(data.question || data.text || '').trim();
     if (!question)
       return { ok: false, status: 400, error: 'Escriba una pregunta.' };
 
     const hello = greetingReply(question);
     if (hello) {
-      return { ok: true, status: 200, text: hello, model: 'local', provider: 'teo' };
+      return {
+        ok: true,
+        status: 200,
+        text: hello,
+        model: 'local',
+        provider: 'teo',
+        assistant: brand.assistantName,
+        program: brand.programName,
+      };
     }
 
     if (!isLlmConfigured()) {
       return {
         ok: false,
         status: 503,
-        error:
-          'TEO aún no está configurado. Agregue OPENAI_API_KEY (o GEMINI_API_KEY) en plateado-api/.env y reinicie el servicio ai.',
+        error: `${brand.assistantName} aún no está configurado. Agregue OPENAI_API_KEY (o GEMINI_API_KEY) y reinicie el servicio ai.`,
       };
     }
 
@@ -111,9 +107,9 @@ ${context}
 PREGUNTA de ${auth.user.role || auth.user.roleId}:
 ${question}
 
-Responda como TEO: natural, coherente, con los datos del contexto. Sin jerga técnica:`;
+Responda como ${brand.assistantName} de ${brand.programName}: natural, coherente, con los datos del contexto. Sin jerga técnica. No diga que es TEO ni el asistente de NARA salvo que el programa sea NARA.`;
       const { text, model, provider } = await llmComplete(prompt, {
-        system: SYSTEM,
+        system: staffAskSystem(brand),
         temperature: 0.4,
         maxTokens: 2200,
       });
@@ -125,9 +121,17 @@ Responda como TEO: natural, coherente, con los datos del contexto. Sin jerga té
         .replace(/\s{2,}/g, ' ')
         .replace(/\s+([.,;:])/g, '$1')
         .trim();
-      return { ok: true, status: 200, text: clean || text, model, provider };
+      return {
+        ok: true,
+        status: 200,
+        text: clean || text,
+        model,
+        provider,
+        assistant: brand.assistantName,
+        program: brand.programName,
+      };
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error en TEO';
+      const message = err instanceof Error ? err.message : `Error en ${brand.assistantName}`;
       return {
         ok: false,
         status: 503,

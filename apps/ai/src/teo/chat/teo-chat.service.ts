@@ -3,26 +3,30 @@ import { MongoStore } from '@nara/database';
 import { SessionService } from '@nara/auth-core';
 import { llmComplete, isLlmConfigured, callN8nTeo } from '@nara/ai';
 import { requireRoles } from '../../shared/require-roles';
-import { TEO_VOICE } from '../prompts/teo-voice';
+import { assistantVoice } from '../prompts/teo-voice';
+import { assistantBrand } from '../prompts/assistant-brand';
 import { crisisCheck, escalarCrisis, esRespuestaCrisis, textoDeCrisis } from './teo-crisis';
 import { teoRateLimitError, teoRateLimitOk } from '../rate-limit';
 import { redactTextForTeo } from '../context/staff-app-state';
 
-/** H-006 (reporte TRL 2026-10-10): nombres de los servicios de la ruta, para que TEO pueda hablar de ella. */
-const SERVICIOS: Record<string, string> = {
-  mood: 'registro diario de ánimo',
-  ia: 'conversación con TEO',
-  videos: 'videos',
-  tech: 'técnicas de respiración y relajación',
-  wa: 'mensajes por WhatsApp',
-  call: 'llamadas de seguimiento',
-  revisit: 'revisita del experto de campo',
-  group: 'sesiones grupales',
-  social: 'apoyo social',
-  clin: 'atención con el psicólogo',
-  bracelet: 'manilla de sueño',
-  hist: 'su historial',
-};
+/** H-006: nombres de servicios de la ruta (el de IA usa el nombre del asistente del programa). */
+function serviciosRuta(): Record<string, string> {
+  const { assistantName } = assistantBrand();
+  return {
+    mood: 'registro diario de ánimo',
+    ia: `conversación con ${assistantName}`,
+    videos: 'videos',
+    tech: 'técnicas de respiración y relajación',
+    wa: 'mensajes por WhatsApp',
+    call: 'llamadas de seguimiento',
+    revisit: 'revisita del experto de campo',
+    group: 'sesiones grupales',
+    social: 'apoyo social',
+    clin: 'atención con el psicólogo',
+    bracelet: 'manilla de sueño',
+    hist: 'su historial',
+  };
+}
 
 @Injectable()
 export class TeoChatService {
@@ -86,6 +90,8 @@ export class TeoChatService {
       const modulos: string[] = Array.isArray(patient?.modulesEnabled)
         ? patient!.modulesEnabled.map(String)
         : [];
+      const brand = assistantBrand();
+      const SERVICIOS = serviciosRuta();
       const ruta = modulos.map((m) => SERVICIOS[m]).filter(Boolean);
       // Prompt sin nombre completo / edad / territorio (solo código de perfil y ruta).
       const patientSnap = patient
@@ -107,9 +113,9 @@ export class TeoChatService {
             dicho: message,
             termino,
           });
-          return { ok: true, status: 200, crisis: true, escalada: true, alertId: r.alertId, text: textoDeCrisis(fname, true) };
+          return { ok: true, status: 200, crisis: true, escalada: true, alertId: r.alertId, text: textoDeCrisis(fname, true), assistant: brand.assistantName, program: brand.programName };
         } catch {
-          return { ok: true, status: 200, crisis: true, escalada: false, text: textoDeCrisis(fname, false) };
+          return { ok: true, status: 200, crisis: true, escalada: false, text: textoDeCrisis(fname, false), assistant: brand.assistantName, program: brand.programName };
         }
       };
       const termino = message ? crisisCheck(message) : null;
@@ -131,6 +137,8 @@ export class TeoChatService {
           status: 200,
           text: n8nText.trim(),
           provider: 'n8n',
+          assistant: brand.assistantName,
+          program: brand.programName,
         };
       }
 
@@ -138,17 +146,18 @@ export class TeoChatService {
         return {
           ok: false,
           status: 503,
-          error: 'TEO no tiene un proveedor de IA configurado.',
+          error: `${brand.assistantName} no tiene un proveedor de IA configurado.`,
         };
       }
 
-      const system = `${TEO_VOICE}
+      const system = `${assistantVoice()}
 
-Temas permitidos: su ruta en NARA y sus servicios, su ánimo, su sueño, las técnicas y su acompañamiento. Si pregunta por su ruta, nómbrele los servicios que tiene.
-Solo si pregunta algo que no tiene que ver con NARA, diga con amabilidad que solo puede ayudar con el programa NARA.
+Temas permitidos: su ruta en ${brand.programName} y sus servicios, su ánimo, su sueño, las técnicas y su acompañamiento. Si pregunta por su ruta, nómbrele los servicios que tiene.
+Solo si pregunta algo que no tiene que ver con ${brand.programName}, diga con amabilidad que solo puede ayudar con el programa ${brand.programName}.
+Preséntese como ${brand.assistantName}. No diga que se llama TEO ni que es el asistente de NARA, salvo que el programa sea NARA.
 Use la ficha del paciente de la base; no invente datos clínicos.`;
 
-      const prompt = `Hablas con una persona del programa (perfil ${profile}).
+      const prompt = `Hablas con una persona del programa ${brand.programName} (perfil ${profile}).
 Ficha (Mongo, sin PII): ${patientSnap}
 Servicios de su ruta: ${ruta.length ? ruta.join(', ') : '(la ruta todavía no está activa: la activa el clínico después de aprobar la evaluación)'}
 Puedes ofrecer la respiración 4-6, anotar un tema para la sesión o un recurso de Mi ruta.
@@ -158,7 +167,7 @@ Historial reciente:
 ${history || '(inicio de conversación)'}
 
 Paciente: ${message}
-TEO:`;
+${brand.assistantName}:`;
 
       const { text, model, provider } = await llmComplete(prompt, {
         system,
@@ -166,9 +175,10 @@ TEO:`;
         maxTokens: 400,
       });
       if (esRespuestaCrisis(text)) return { ...(await escalar('clasificador IA')), model, provider };
-      return { ok: true, status: 200, text: text.trim(), model, provider };
+      return { ok: true, status: 200, text: text.trim(), model, provider, assistant: brand.assistantName, program: brand.programName };
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error en TEO';
+      const brand = assistantBrand();
+      const message = err instanceof Error ? err.message : `Error en ${brand.assistantName}`;
       return { ok: false, status: 503, error: message };
     }
   }

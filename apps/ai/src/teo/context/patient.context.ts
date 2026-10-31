@@ -1,5 +1,5 @@
 import type { Db } from 'mongodb';
-import { APP_OVERVIEW } from '../prompts/app-overview';
+import { appOverview } from '../prompts/app-overview';
 
 export async function buildPatientContext(
   db: Db,
@@ -30,7 +30,7 @@ export async function buildPatientContext(
     : null;
 
   return [
-    APP_OVERVIEW,
+    appOverview(),
     'Quién pregunta: paciente. Solo puede ver su propia información. No hay datos de otras personas.',
     'Su situación en el programa: ' + JSON.stringify(snap),
     'Explíquele con naturalidad su estado, módulos o ruta. Si pregunta por otros pacientes o del programa en general, diga con amabilidad que solo puede hablar de su acompañamiento.',

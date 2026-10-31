@@ -3,6 +3,7 @@ import {
   esRespuestaCrisis as esRespuestaCrisisNucleo,
   textoDeCrisis as textoPlantilla,
 } from '../../../../../libs/crisis/src/detect';
+import { assistantBrand } from '../prompts/assistant-brand';
 
 // Igual que APP_STATE_KEY de @nara/common (patterns.ts).
 const APP_STATE_KEY = 'app_state';
@@ -82,7 +83,8 @@ export async function escalarCrisis(
 
   const pa = p.patient || {};
   const place = String(pa.place || '').split(',')[0];
-  const what = `Escribió a TEO: «${p.dicho.slice(0, 280)}». TEO le dio la línea 123, pausó la conversación y levantó la alerta.`;
+  const assistantName = assistantBrand().assistantName || 'Aurelia';
+  const what = `Escribió a ${assistantName}: «${p.dicho.slice(0, 280)}». ${assistantName} le dio la línea 123, pausó la conversación y levantó la alerta.`;
   const alerta = {
     at,
     status: 'new',
@@ -95,9 +97,9 @@ export async function escalarCrisis(
     profile: pa.profile || '',
     what,
     term: p.termino,
-    source: 'Conversación con TEO (IA)',
+    source: `Conversación con ${assistantName}`,
     phone: pa.phone || '',
-    createdBy: 'TEO (servidor)',
+    createdBy: `${assistantName} (servidor)`,
     createdByRole: 'sistema',
   };
   const evento = {
@@ -110,7 +112,7 @@ export async function escalarCrisis(
     age: pa.age,
     place,
     profile: pa.profile || '',
-    by: 'TEO (servidor)',
+    by: `${assistantName} (servidor)`,
     byRole: 'sistema',
     source: alerta.source,
     what,
