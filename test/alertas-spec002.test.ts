@@ -13,22 +13,41 @@ function baseFalsa() {
     patients: [{ id: 'sm-1', terr: 'Bucaramanga' }, { id: 'sm-9', terr: 'Cali' }],
     people: [{ id: 'sm-1', terr: 'Bucaramanga' }, { id: 'nueva-1', terr: 'Bucaramanga', status: 'Sin evaluación' }],
   };
-  const coincide = (d: Record<string, any>, q: Record<string, unknown>) =>
-    Object.entries(q).every(([k, v]) => (k === 'alerts.id' ? (d.alerts || []).some((a: any) => a.id === v) : d[k] === v));
+  const coincide = (d: Record<string, any>, q: Record<string, unknown>): boolean => {
+    if (q && typeof q === 'object' && Array.isArray((q as any).$or)) {
+      return ((q as any).$or as Record<string, unknown>[]).some((alt) => coincide(d, alt));
+    }
+    return Object.entries(q || {}).every(([k, v]) =>
+      k === 'alerts.id' ? (d.alerts || []).some((a: any) => a.id === v) : d[k] === v,
+    );
+  };
+  const applyUpdate = (d: Record<string, any>, u: Record<string, any>) => {
+    Object.assign(d, u.$set || {});
+    for (const [k, v] of Object.entries<any>(u.$push || {})) {
+      const [a, b] = k.split('.');
+      const arr = b ? ((d[a] = d[a] || {})[b] = d[a][b] || []) : (d[a] = d[a] || []);
+      arr.unshift(...v.$each);
+    }
+  };
   return {
     cols,
     collection: (n: string) => ({
       find: (q: Record<string, unknown>) => ({ toArray: async () => (cols[n] || []).filter((d) => coincide(d, q)) }),
       findOne: async (q: Record<string, unknown>) => (cols[n] || []).find((d) => coincide(d, q)) || null,
       updateOne: async (q: Record<string, unknown>, u: Record<string, any>) => {
-        const d = (cols[n] || []).find((x) => coincide(x, q));
-        if (!d) return;
-        Object.assign(d, u.$set || {});
-        for (const [k, v] of Object.entries<any>(u.$push || {})) {
-          const [a, b] = k.split('.');
-          const arr = b ? ((d[a] = d[a] || {})[b] = d[a][b] || []) : (d[a] = d[a] || []);
-          arr.unshift(...v.$each);
+        const d = (cols[n] || []).find((row) => coincide(row, q));
+        if (!d) return { matchedCount: 0 };
+        applyUpdate(d, u);
+        return { matchedCount: 1 };
+      },
+      updateMany: async (q: Record<string, unknown>, u: Record<string, any>) => {
+        let matchedCount = 0;
+        for (const d of cols[n] || []) {
+          if (!coincide(d, q)) continue;
+          applyUpdate(d, u);
+          matchedCount += 1;
         }
+        return { matchedCount };
       },
     }),
   } as any;

@@ -1,5 +1,5 @@
 import { MongoStore } from '@nara/database';
-import { APP_OVERVIEW } from '../prompts/app-overview';
+import { appOverview } from '../prompts/app-overview';
 import { buildObserverContext } from './observer.context';
 import { buildPatientContext } from './patient.context';
 import { buildStaffContext } from './staff.context';
@@ -20,5 +20,5 @@ export async function buildContext(
   if (roleId === 'admin' || roleId === 'clinico' || roleId === 'experto') {
     return buildStaffContext(db, roleId, question, userId);
   }
-  return [APP_OVERVIEW, `Rol del usuario que pregunta: ${roleId}`].join('\n');
+  return [appOverview(), `Rol del usuario que pregunta: ${roleId}`].join('\n');
 }

@@ -1,6 +1,6 @@
 import type { Db } from 'mongodb';
 import { APP_STATE_KEY, pickAppStateSlices } from '@nara/common';
-import { APP_OVERVIEW } from '../prompts/app-overview';
+import { appOverview } from '../prompts/app-overview';
 
 async function agg(
   db: Db,
@@ -145,7 +145,7 @@ export async function buildObserverContext(db: Db, roleId: string) {
   ]);
 
   const parts = [
-    APP_OVERVIEW,
+    appOverview(),
     `Quién pregunta: observador (${roleId}). Solo datos agregados; nunca diga nombres, correos ni teléfonos.`,
     `Totales: ${nPeople} personas captadas, ${nPatients} fichas de paciente, ${nExperts} expertos, ${nTerr} territorios.`,
     `En crisis (bloqueo): ${crisisLocked}. Inactivos: ${inactiveLocked}. Evaluaciones por aprobar: ${pendingEval}.`,

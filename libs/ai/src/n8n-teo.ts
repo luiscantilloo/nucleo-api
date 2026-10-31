@@ -1,4 +1,5 @@
 import { logIntegration } from '@nara/common';
+import { recordOutbound } from './outbound-evidence';
 
 /** URL del webhook TEO paciente (n8n). Override con N8N_TEO_WEBHOOK. */
 const DEFAULT_TEO_N8N =
@@ -49,6 +50,13 @@ export async function callN8nTeo(
   if (!url) return null;
 
   const headers = n8nTeoHeaders();
+
+  recordOutbound({
+    destino: 'n8n',
+    url,
+    method: 'POST',
+    body: { ...payload },
+  });
 
   const started = Date.now();
   try {

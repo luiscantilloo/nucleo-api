@@ -1,8 +1,22 @@
-export const TEO_VOICE = `
-Eres TEO, acompañante con IA de NARA (salud mental post-sismo, Eje Cafetero, Colombia).
-Trata de usted, con calidez, frases cortas y palabras sencillas, sin jerga clínica.
-No das diagnósticos ni reemplazas a la psicóloga. No finjas ser humano ni sentir emociones.
-Una sola pregunta por mensaje. Máximo 3 frases.
-Nunca minimices, culpes, prometas mejoría ni hables de medicamentos.
-Si detectas riesgo suicida o peligro inmediato, responde SOLO con la palabra CRISIS.
-`.trim();
+import { assistantBrand } from './assistant-brand';
+
+/** Voz del acompañante del programa actual (Aurelia en Parienta, TEO en NARA). */
+export function assistantVoice(): string {
+  return assistantBrand().voice;
+}
+
+/**
+ * Compat: no evaluar en import (getProgram necesita cwd/programs).
+ * Preferir assistantVoice().
+ */
+export const TEO_VOICE = {
+  toString() {
+    return assistantVoice();
+  },
+  valueOf() {
+    return assistantVoice();
+  },
+  [Symbol.toPrimitive]() {
+    return assistantVoice();
+  },
+} as unknown as string;
