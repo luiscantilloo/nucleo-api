@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "nota": "Rutas por perfil P01–P15 (riesgo × digital). Juegos individuales + analizador con capacidad Media/Alta.",
+  "por_perfil": {
+    "P01": ["clin"],
+    "P02": ["ia", "frutas", "simon", "duelo", "sudoku", "analizador"],
+    "P03": ["mood", "ia", "frutas", "simon", "duelo", "sudoku", "analizador"],
+    "P04": ["clin"],
+    "P05": ["ia", "frutas", "simon", "duelo", "sudoku", "analizador"],
+    "P06": ["mood", "ia", "frutas", "simon", "duelo", "sudoku", "analizador"],
+    "P07": ["clin"],
+    "P08": ["clin", "ia", "frutas", "simon", "duelo", "sudoku", "analizador"],
+    "P09": ["mood", "clin", "ia", "frutas", "simon", "duelo", "sudoku", "analizador"],
+    "P10": ["clin"],
+    "P11": ["clin", "ia", "frutas", "simon", "duelo", "sudoku", "analizador"],
+    "P12": ["mood", "clin", "ia", "frutas", "simon", "duelo", "sudoku", "analizador"],
+    "P13": ["clin"],
+    "P14": ["clin", "frutas", "simon", "duelo", "sudoku", "analizador"],
+    "P15": ["mood", "clin", "frutas", "simon", "duelo", "sudoku", "analizador"]
+  },
+  "reglas": []
+}

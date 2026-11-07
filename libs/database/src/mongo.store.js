@@ -8,7 +8,25 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MongoStore = void 0;
 const common_1 = require("@nestjs/common");
+const dns_1 = require("node:dns");
 const mongodb_1 = require("mongodb");
+function ensurePublicDnsForMongoSrv() {
+    const raw = String(process.env.NODE_DNS_SERVERS || '1.1.1.1,8.8.8.8').trim();
+    if (!raw || raw === 'system')
+        return;
+    const servers = raw.split(',').map((s) => s.trim()).filter(Boolean);
+    if (!servers.length)
+        return;
+    try {
+        const current = dns_1.getServers().join(',');
+        if (current === servers.join(','))
+            return;
+        dns_1.setServers(servers);
+    }
+    catch {
+        /* ignore */
+    }
+}
 let MongoStore = class MongoStore {
     client = null;
     db = null;
@@ -19,6 +37,7 @@ let MongoStore = class MongoStore {
         if (!uri)
             throw new Error('Falta MONGODB_URI');
         const dbName = process.env.MONGODB_DB || 'nara';
+        ensurePublicDnsForMongoSrv();
         this.client = new mongodb_1.MongoClient(uri);
         await this.client.connect();
         this.db = this.client.db(dbName);

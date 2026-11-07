@@ -11,10 +11,15 @@ function secret() {
       ? process.env.NARA_AUTH_SECRET
       : program === 'parienta' || program === 'plateado'
         ? process.env.PARIENTA_AUTH_SECRET || process.env.PLATEADO_AUTH_SECRET
-        : undefined;
+        : program === 'quintia' || program === 'consiente'
+          ? process.env.QUINTIA_AUTH_SECRET ||
+            process.env.CONSCIENTE_AUTH_SECRET
+          : undefined;
   const s =
     process.env.AUTH_SECRET ||
     byProgram ||
+    process.env.QUINTIA_AUTH_SECRET ||
+    process.env.CONSCIENTE_AUTH_SECRET ||
     process.env.NARA_AUTH_SECRET ||
     process.env.PARIENTA_AUTH_SECRET ||
     process.env.PLATEADO_AUTH_SECRET;

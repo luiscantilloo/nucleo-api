@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "nota": "Catálogo QUINTIA: ánimo, clínica, TEJIVA, 4 juegos individuales y analizador.",
+  "servicios": [
+    { "id": "mood", "nombre": "Ánimo en la app" },
+    { "id": "clin", "nombre": "Psicólogo / clínica" },
+    { "id": "ia", "nombre": "TEJIVA · acompañante digital" },
+    { "id": "frutas", "nombre": "Frutas" },
+    { "id": "simon", "nombre": "Simón dice" },
+    { "id": "duelo", "nombre": "Duelo de cartas" },
+    { "id": "sudoku", "nombre": "Sudoku" },
+    { "id": "analizador", "nombre": "Analizador" }
+  ]
+}

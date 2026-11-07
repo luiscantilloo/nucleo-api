@@ -18,6 +18,7 @@
     "start:dev:parienta": "node scripts/run-dev.mjs parienta",
     "start:dev:plateado": "node scripts/run-dev.mjs parienta",
     "start:dev:nara": "node scripts/run-dev.mjs nara",
+    "start:dev:quintia": "node scripts/run-dev.mjs quintia",
     "start:dev:ambos": "node scripts/run-ambos.mjs",
     "start:prod:gateway": "node dist/apps/gateway/apps/gateway/src/main.js",
     "start:prod:auth": "node dist/apps/auth/apps/auth/src/main.js",
@@ -37,7 +38,10 @@
     "db:init": "node scripts/init-db.mjs",
     "db:init:parienta": "PROGRAM_ID=parienta MONGODB_DB=nucleo_parienta node scripts/init-db.mjs",
     "db:init:plateado": "PROGRAM_ID=parienta MONGODB_DB=nucleo_parienta node scripts/init-db.mjs",
-    "db:init:nara": "PROGRAM_ID=nara node scripts/init-db.mjs"
+    "db:init:nara": "PROGRAM_ID=nara node scripts/init-db.mjs",
+    "db:init:quintia": "PROGRAM_ID=quintia MONGODB_DB=nucleo_consiente node scripts/init-db.mjs",
+    "db:seed:quintia": "PROGRAM_ID=quintia node scripts/seed-quintia-demo.mjs",
+    "test:quintia": "PROGRAM_ID=quintia node --test test/quintia-seed-demo.test.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

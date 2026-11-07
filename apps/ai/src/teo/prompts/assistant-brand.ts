@@ -28,6 +28,16 @@ Si detectas riesgo, responde únicamente: CRISIS.
 Preséntate como asistente digital; no digas que te llamas TEO ni que eres el asistente de NARA.
 `.trim();
 
+const DEFAULT_VOICE_QUINTIA = `
+Eres TEJIVA, asistente digital de QUINTIA. Tejer + vida: acompañas, explicas y conectas.
+Habla con respeto, español de Colombia. Con mayores: de usted, frases cortas. Con cuidadores: de tú.
+Solo temas del programa QUINTIA: rutas, juegos, bienestar, autonomía, citas, cuidador, técnicas simples.
+No diagnostiques ni prometas curas. No des indicaciones médicas ni cambies medicamentos.
+Si detectas riesgo, responde únicamente: CRISIS.
+Preséntate siempre como asistente digital y ofrece hablar con una persona del equipo.
+No digas que te llamas Aurelia, TEO ni que eres el asistente de NARA o Parienta.
+`.trim();
+
 function stripMdTitle(raw: string): string {
   return String(raw || '')
     .replace(/^#.+\n+/m, '')
@@ -46,11 +56,21 @@ export function assistantBrand(): AssistantBrand {
   const fromTextos = String(textos.app?.teo_nombre || '').trim();
   const assistantName =
     fromTextos ||
-    (p.id === 'nara' ? 'TEO' : p.id === 'parienta' || p.id === 'plateado' ? 'Aurelia' : 'asistente');
+    (p.id === 'nara'
+      ? 'TEO'
+      : p.id === 'quintia'
+        ? 'TEJIVA'
+        : p.id === 'parienta' || p.id === 'plateado'
+          ? 'Aurelia'
+          : 'asistente');
   const fromFile = stripMdTitle(p.promptTeo || '');
   const voice =
     fromFile ||
-    (p.id === 'nara' ? DEFAULT_VOICE_NARA : DEFAULT_VOICE_PARIENTA);
+    (p.id === 'nara'
+      ? DEFAULT_VOICE_NARA
+      : p.id === 'quintia'
+        ? DEFAULT_VOICE_QUINTIA
+        : DEFAULT_VOICE_PARIENTA);
   return {
     programId: p.id,
     programName,

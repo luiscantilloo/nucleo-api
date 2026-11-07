@@ -1,11 +1,13 @@
 /**
  * Arranca una instancia del núcleo leyendo UN solo .env.
  *
- *   node scripts/run-dev.mjs parienta   → :4000 / nucleo_parienta (o PARIENTA_MONGODB_DB)
- *   node scripts/run-dev.mjs plateado   → alias de parienta (compat)
- *   node scripts/run-dev.mjs nara       → :4100 / DB nara (Atlas)
+ *   node scripts/run-dev.mjs parienta    → :4000 / nucleo_parienta (o PARIENTA_MONGODB_DB)
+ *   node scripts/run-dev.mjs plateado    → alias de parienta (compat)
+ *   node scripts/run-dev.mjs nara        → :4100 / DB nara (Atlas)
+ *   node scripts/run-dev.mjs quintia     → :4200 / nucleo_consiente (o QUINTIA_MONGODB_DB)
+ *   node scripts/run-dev.mjs consiente   → alias de quintia (compat)
  *
- * En .env: variables compartidas + prefijos PARIENTA_* (o PLATEADO_* legado) y NARA_*.
+ * En .env: variables compartidas + prefijos PARIENTA_* / NARA_* / QUINTIA_* (alias CONSCIENTE_*).
  */
 import { existsSync, readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -16,6 +18,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
 let program = String(process.argv[2] || "").trim();
 if (program === "plateado") program = "parienta";
+if (program === "consiente") program = "quintia";
 
 const DEFAULTS = {
   parienta: {
@@ -44,10 +47,23 @@ const DEFAULTS = {
     AUTH_SECRET: "dev-auth-secret-nara-change-me",
     prefix: "NARA",
   },
+  quintia: {
+    PROGRAM_ID: "quintia",
+    MONGODB_DB: "nucleo_consiente",
+    GATEWAY_PORT: "4200",
+    AUTH_PORT: "4201",
+    PEOPLE_PORT: "4202",
+    OPS_PORT: "4203",
+    AI_PORT: "4204",
+    CORS_ORIGIN: "http://localhost:3004,http://127.0.0.1:3004",
+    AUTH_SECRET: "dev-auth-secret-quintia-change-me",
+    prefix: "QUINTIA",
+    legacyPrefix: "CONSCIENTE",
+  },
 };
 
 if (!DEFAULTS[program]) {
-  console.error("Uso: node scripts/run-dev.mjs <parienta|nara>");
+  console.error("Uso: node scripts/run-dev.mjs <parienta|nara|quintia>");
   process.exit(1);
 }
 
@@ -104,6 +120,19 @@ const mongodbDb =
   (legacy ? file[`MONGODB_DB_${legacy}`] : undefined) ||
   d.MONGODB_DB;
 
+// Hotspot/DNS local rompe mongodb+srv (querySrv EBADRESP). Forzar resolvers públicos en hijos Nest.
+const dnsPreload = resolve(root, "scripts/dns-preload.cjs");
+const dnsServers =
+  pref2("DNS_SERVERS") ||
+  file.NODE_DNS_SERVERS ||
+  process.env.NODE_DNS_SERVERS ||
+  "1.1.1.1,8.8.8.8";
+const prevNodeOpts = String(process.env.NODE_OPTIONS || "").trim();
+const requireFlag = `--require ${dnsPreload}`;
+const nodeOptions = prevNodeOpts.includes("dns-preload")
+  ? prevNodeOpts
+  : [prevNodeOpts, requireFlag].filter(Boolean).join(" ");
+
 const env = {
   ...process.env,
   ...pick(file, [
@@ -132,6 +161,8 @@ const env = {
   NARA_AI_PORT: ai,
   NUCLEO_PORTS: [gateway, auth, people, ops, ai].join(","),
   NARA_MS_HOST: file.NARA_MS_HOST || "127.0.0.1",
+  NODE_DNS_SERVERS: dnsServers,
+  NODE_OPTIONS: nodeOptions,
 };
 
 if (!env.MONGODB_URI) {
@@ -140,7 +171,7 @@ if (!env.MONGODB_URI) {
 }
 
 console.log(
-  `[run-dev] programa=${env.PROGRAM_ID} gateway=:${env.PORT} db=${env.MONGODB_DB}`,
+  `[run-dev] programa=${env.PROGRAM_ID} gateway=:${env.PORT} db=${env.MONGODB_DB} dns=${dnsServers}`,
 );
 
 const child = spawn("npm", ["run", "start:dev:stack"], {
@@ -149,5 +180,4 @@ const child = spawn("npm", ["run", "start:dev:stack"], {
   stdio: "inherit",
   shell: true,
 });
-
-child.on("exit", (code) => process.exit(code ?? 0));
+child.on("exit", (c) => process.exit(c ?? 0));

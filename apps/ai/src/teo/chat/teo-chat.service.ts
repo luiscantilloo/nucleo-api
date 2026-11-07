@@ -27,10 +27,8 @@ function serviciosRuta(): Record<string, string> {
     wa: 'mensajes por WhatsApp',
     call: 'llamadas de seguimiento',
     revisit: 'revisita del experto de campo',
-    group: 'sesiones grupales',
     social: 'apoyo social',
     clin: 'atención con el psicólogo',
-    bracelet: 'manilla de sueño',
     hist: 'su historial',
   };
 }

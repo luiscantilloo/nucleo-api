@@ -207,7 +207,7 @@ export async function buildStaffContext(
   parts.push(
     roleId === 'experto' && scope.expertKeys.length
       ? `Panorama (su alcance / programa): ${nPeople} personas a su cargo o en su zona (filtro aplicado), ${nPatients} fichas; en el programa hay ${nExperts} expertos, ${nTerr} territorios, ${nAccounts} cuentas, ${nAlerts} alertas, ${nFlags} revisiones de calidad, ${nAssets} activos, ${nWorkItems} ítems en cola de campo.`
-      : `Panorama: ${nPeople} personas captadas, ${nPatients} fichas de paciente, ${nExperts} expertos, ${nTerr} territorios, ${nAccounts} cuentas, ${nAlerts} alertas, ${nFlags} revisiones de calidad, ${nAssets} activos (manillas/tabletas), ${nWorkItems} pendientes en cola de campo.`,
+      : `Panorama: ${nPeople} personas captadas, ${nPatients} fichas de paciente, ${nExperts} expertos, ${nTerr} territorios, ${nAccounts} cuentas, ${nAlerts} alertas, ${nFlags} revisiones de calidad, ${nAssets} activos (tabletas), ${nWorkItems} pendientes en cola de campo.`,
   );
 
   const [
@@ -628,7 +628,7 @@ export async function buildStaffContext(
       return row;
     });
     parts.push(
-      'Activos (manillas/tabletas) con asignación:',
+      'Activos (tabletas) con asignación:',
       JSON.stringify(safeAssets),
     );
   }
