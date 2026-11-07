@@ -19,6 +19,7 @@ import { DOCUMENT_STORE, MongoStore } from '@nara/database';
 import { SessionService, hashPassword } from '@nara/auth-core';
 import { requireRoles } from '../shared/require-roles';
 import { listCollection } from '../shared/list-collection';
+import { ensureTestTerritory } from '../shared/ensure-test-territory';
 
 @Injectable()
 export class AccountsService {
@@ -204,6 +205,7 @@ export class AccountsService {
           error: 'El gestor de campo debe tener un único territorio asignado.',
         };
       }
+      await ensureTestTerritory(db, singleTerr);
       if (!(await db.collection('territories').findOne({ name: singleTerr }))) {
         return {
           ok: false,
@@ -232,9 +234,23 @@ export class AccountsService {
     }
 
     const phoneRaw = String(body.phone || '').trim();
+    const bodyFirst = String(body.firstName || '').trim();
+    const bodyLast = String(body.lastName || '').trim();
+    // Si el front manda nombre completo y no partes, repartir por espacios.
+    const nameParts = name.split(/\s+/).filter(Boolean);
+    const firstName =
+      bodyFirst ||
+      String(existingById?.firstName || '').trim() ||
+      (nameParts.length > 1 ? nameParts[0]! : nameParts[0] || '');
+    const lastName =
+      bodyLast ||
+      String(existingById?.lastName || '').trim() ||
+      (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
     const setDoc: Record<string, unknown> = {
       id,
       name,
+      firstName,
+      lastName,
       email: emailRaw,
       // Correo = acceso; no reutilizar celular en contact/email.
       contact: emailRaw || contact,

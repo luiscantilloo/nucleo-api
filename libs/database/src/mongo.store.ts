@@ -1,6 +1,25 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import dns from 'node:dns';
 import { MongoClient, type Db, type Document } from 'mongodb';
 import type { DocumentStore } from '@nara/common';
+
+/** Hotspots / DNS captive rompen mongodb+srv (querySrv EBADRESP). */
+function ensurePublicDnsForMongoSrv() {
+  const raw = String(process.env.NODE_DNS_SERVERS || '1.1.1.1,8.8.8.8').trim();
+  if (!raw || raw === 'system') return;
+  const servers = raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!servers.length) return;
+  try {
+    const current = dns.getServers().join(',');
+    if (current === servers.join(',')) return;
+    dns.setServers(servers);
+  } catch {
+    /* ignore */
+  }
+}
 
 @Injectable()
 export class MongoStore implements DocumentStore, OnModuleDestroy {
@@ -12,6 +31,7 @@ export class MongoStore implements DocumentStore, OnModuleDestroy {
     const uri = process.env.MONGODB_URI;
     if (!uri) throw new Error('Falta MONGODB_URI');
     const dbName = process.env.MONGODB_DB || 'nara';
+    ensurePublicDnsForMongoSrv();
     this.client = new MongoClient(uri);
     await this.client.connect();
     this.cachedDb = this.client.db(dbName);

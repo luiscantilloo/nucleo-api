@@ -1,0 +1,45 @@
+{
+  "nombre": "QUINTIA",
+  "asistente": "TEJIVA",
+  "colores": {
+    "noche": "#142F3C",
+    "tinta": "#142F3C",
+    "niebla": "#F6F5F0",
+    "blanco": "#F6F5F0",
+    "plata": "#7A8F96",
+    "plata_oscura": "#3A555C",
+    "ciencia": "#436FD2",
+    "tecnologia": "#DA9E46",
+    "experiencias": "#C27241",
+    "comunidad": "#2B8A74",
+    "azul": "#436FD2",
+    "azul_claro": "#436FD2",
+    "teal": "#2B8A74",
+    "ambar": "#DA9E46",
+    "rojo": "#B42318",
+    "lineas": "#E5E0D5",
+    "texto2": "#6B7280",
+    "lima": "#2B8A74",
+    "crema_clara": "#F6F5F0",
+    "naranja": "#C27241",
+    "verde": "#2B8A74",
+    "verde_medio": "#2B8A74",
+    "profundidad": "#142F3C",
+    "conexion": "#2B8A74",
+    "marfil": "#F6F5F0",
+    "arena": "#E5E0D5"
+  },
+  "tipografia": {
+    "titulos": "Bricolage Grotesque",
+    "texto": "Bricolage Grotesque",
+    "mono": "DM Mono"
+  },
+  "accesibilidad": {
+    "letra_min_px": 20,
+    "boton_min_px": 56,
+    "boton_escuchar": true,
+    "una_accion_por_pantalla": true
+  },
+  "logo": "/quintia/logo/quintia-wordmark-oscuro.svg",
+  "logo_claro": "/quintia/logo/quintia-wordmark-claro.svg"
+}

@@ -124,6 +124,11 @@ export const PATIENT_MODULE_IDS = [
   'bracelet',
   'hist',
   'juegos',
+  'frutas',
+  'simon',
+  'duelo',
+  'sudoku',
+  'analizador',
 ] as const;
 
 export type PatientModuleId = (typeof PATIENT_MODULE_IDS)[number];
@@ -133,19 +138,38 @@ export const DEFAULT_PATIENT_MODULES: PatientModuleId[] = [
   'mood',
   'clin',
   'ia',
-  'juegos',
+  'frutas',
+  'simon',
+  'duelo',
+  'sudoku',
+  'analizador',
 ];
 
 const ALLOWED_MODULES = new Set<string>(PATIENT_MODULE_IDS);
+
+const GAME_MODULE_IDS: PatientModuleId[] = [
+  'frutas',
+  'simon',
+  'duelo',
+  'sudoku',
+];
 
 export function normalizeModuleIds(
   raw: unknown,
   fallback: readonly PatientModuleId[] = DEFAULT_PATIENT_MODULES,
 ): PatientModuleId[] {
   if (!Array.isArray(raw)) return fallback.slice();
-  const out = raw
-    .map(String)
-    .filter((id): id is PatientModuleId => ALLOWED_MODULES.has(id));
+  const expanded: string[] = [];
+  for (const id of raw.map(String)) {
+    if (id === 'juegos') {
+      for (const g of GAME_MODULE_IDS) expanded.push(g);
+      continue;
+    }
+    expanded.push(id);
+  }
+  const out = expanded.filter((id): id is PatientModuleId =>
+    ALLOWED_MODULES.has(id),
+  );
   return Array.from(new Set(out));
 }
 

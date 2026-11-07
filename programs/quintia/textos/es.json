@@ -1,0 +1,20 @@
+{
+  "app": {
+    "nombre": "QUINTIA",
+    "ingreso_titulo": "Ingresar a QUINTIA",
+    "teo_nombre": "TEJIVA"
+  },
+  "roles": {
+    "gestor": "Gestor",
+    "clinico": "Clínica",
+    "cuidador": "Cuidadora",
+    "persona": "Mi acompañamiento",
+    "admin": "Administración",
+    "observador": "Observador"
+  },
+  "trato": {
+    "m": "solo",
+    "f": "sola",
+    "nb": "sole"
+  }
+}

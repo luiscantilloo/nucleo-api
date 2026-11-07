@@ -28,11 +28,12 @@ export class AiProxyController {
       return sendResult(res, result);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Servicio TEO no disponible';
+        err instanceof Error ? err.message : 'Servicio TEJIVA no disponible';
+      const aiPort = process.env.NARA_AI_PORT || '4204';
       return res.status(503).json({
         ok: false,
         error:
-          'TEO no pudo conectar con el servicio de IA. Reinicie nara-api (ai en :4004). ' +
+          `TEJIVA no pudo conectar con el servicio de IA. Reinicie nucleo-api (ai en :${aiPort}). ` +
           message,
       });
     }
@@ -62,11 +63,12 @@ export class AiProxyController {
       return sendResult(res, result);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Servicio TEO no disponible';
+        err instanceof Error ? err.message : 'Servicio TEJIVA no disponible';
+      const aiPort = process.env.NARA_AI_PORT || '4204';
       return res.status(503).json({
         ok: false,
         error:
-          'TEO no pudo conectar con el servicio de IA. Reinicie nara-api (ai en :4004). ' +
+          `TEJIVA no pudo conectar con el servicio de IA. Reinicie nucleo-api (ai en :${aiPort}). ` +
           message,
       });
     }
@@ -92,7 +94,7 @@ export class AiProxyController {
       return sendResult(res, result);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Servicio TEO no disponible';
+        err instanceof Error ? err.message : 'Servicio TEJIVA no disponible';
       return res.status(503).json({
         ok: false,
         error: 'No se pudieron cargar las conversaciones. ' + message,
@@ -118,7 +120,7 @@ export class AiProxyController {
       return sendResult(res, result);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Servicio TEO no disponible';
+        err instanceof Error ? err.message : 'Servicio TEJIVA no disponible';
       return res.status(503).json({
         ok: false,
         error: 'No se pudo guardar la conversación. ' + message,

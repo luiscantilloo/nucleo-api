@@ -1,5 +1,10 @@
 /**
- * Levanta Plateado (:4000) y NARA (:4100) a la vez — mismo código, endpoints separados.
+ * Levanta los 3 programas a la vez (mismo código, endpoints separados):
+ *   Parienta  → :4000
+ *   NARA      → :4100
+ *   QUINTIA   → :4200
+ *
+ * Uso: npm run start:dev:ambos
  */
 import { spawn } from "node:child_process";
 import { resolve, dirname } from "node:path";
@@ -15,19 +20,25 @@ function run(program) {
   });
 }
 
-console.log("[run-ambos] Plateado → http://127.0.0.1:4000");
-console.log("[run-ambos] NARA     → http://127.0.0.1:4100");
+console.log("[run-ambos] Parienta  → http://127.0.0.1:4000");
+console.log("[run-ambos] NARA      → http://127.0.0.1:4100");
+console.log("[run-ambos] QUINTIA   → http://127.0.0.1:4200");
 
-const a = run("parienta");
-const b = run("nara");
+const children = [run("parienta"), run("nara"), run("quintia")];
 
 function shutdown(code) {
-  a.kill("SIGTERM");
-  b.kill("SIGTERM");
+  for (const c of children) {
+    try {
+      c.kill("SIGTERM");
+    } catch {
+      /* ignore */
+    }
+  }
   process.exit(code);
 }
 
-a.on("exit", (c) => shutdown(c ?? 0));
-b.on("exit", (c) => shutdown(c ?? 0));
+for (const c of children) {
+  c.on("exit", (code) => shutdown(code ?? 0));
+}
 process.on("SIGINT", () => shutdown(0));
 process.on("SIGTERM", () => shutdown(0));

@@ -4,6 +4,7 @@ import { DOCUMENT_STORE, MongoStore } from '@nara/database';
 import { SessionService, hashPassword } from '@nara/auth-core';
 import { requireRoles } from '../shared/require-roles';
 import { listCollection } from '../shared/list-collection';
+import { ensureTestTerritory } from '../shared/ensure-test-territory';
 
 function tempPassword(len = 10): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
@@ -59,7 +60,19 @@ export class ExpertsService {
   async upsert(token: string | null, body: Record<string, unknown>) {
     const auth = await requireRoles(this.sessions, token, ['admin']);
     if ('error' in auth) return auth.error;
-    const name = String(body.name || '').trim();
+    const bodyFirst = String(body.firstName || '').trim();
+    const bodyLast = String(body.lastName || '').trim();
+    const nameParts = String(body.name || '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    const firstName =
+      bodyFirst || (nameParts.length > 1 ? nameParts[0]! : nameParts[0] || '');
+    const lastName =
+      bodyLast || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+    const name =
+      [firstName, lastName].filter(Boolean).join(' ') ||
+      String(body.name || '').trim();
     const phoneDigits = String(body.phone || '').replace(/\D/g, '');
     const emailRaw = String(body.email || body.contact || '')
       .trim()
@@ -74,8 +87,12 @@ export class ExpertsService {
     const defaultDaily = Number(goals?.daily) > 0 ? Number(goals?.daily) : 9;
     const defaultWeekly = Number(goals?.weekly) > 0 ? Number(goals?.weekly) : 45;
     const target = Number(body.target) > 0 ? Number(body.target) : defaultDaily;
-    if (!name)
-      return { ok: false, status: 400, error: 'El nombre es obligatorio.' };
+    if (!firstName || !lastName)
+      return {
+        ok: false,
+        status: 400,
+        error: 'Escriba nombre y apellido del experto.',
+      };
     if (phoneDigits.length < 10 && !body.id)
       return {
         ok: false,
@@ -96,6 +113,7 @@ export class ExpertsService {
       };
 
     const db = dbPreview;
+    await ensureTestTerritory(db, terr || '');
     if (!(await db.collection('territories').findOne({ name: terr }))) {
       return {
         ok: false,
@@ -137,9 +155,11 @@ export class ExpertsService {
           : String(body.phone || existing.phone || '');
       const setDoc: Record<string, unknown> = {
         terr,
+        firstName,
+        lastName,
+        name,
         updatedAt: now,
       };
-      if (name) setDoc.name = name;
       if (phone) setDoc.phone = phone;
       if (emailRaw && /@/.test(emailRaw)) setDoc.email = emailRaw;
       if (body.target != null) setDoc.target = target;
@@ -159,7 +179,13 @@ export class ExpertsService {
           );
       }
       if (existing.accountId) {
-        const accSet: Record<string, unknown> = { terr, name, updatedAt: now };
+        const accSet: Record<string, unknown> = {
+          terr,
+          name,
+          firstName,
+          lastName,
+          updatedAt: now,
+        };
         if (emailRaw && /@/.test(emailRaw)) {
           accSet.email = emailRaw;
           accSet.contact = emailRaw;
@@ -194,11 +220,13 @@ export class ExpertsService {
     await db.collection('accounts').insertOne({
       id: accountId,
       name,
+      firstName,
+      lastName,
       email: emailRaw,
       contact: emailRaw,
       phone,
       role: 'Gestor de campo',
-      roleId: 'gestor',
+      roleId: 'experto',
       terr,
       org: PROGRAM_ORG,
       status: 'Activo',
@@ -211,6 +239,8 @@ export class ExpertsService {
     const doc = {
       id,
       name,
+      firstName,
+      lastName,
       phone,
       email: emailRaw,
       terr,
