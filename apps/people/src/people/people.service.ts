@@ -46,7 +46,16 @@ export class PeopleService {
     // H-004 (TRL 2026-10-10): el observador solo recibe conteos agregados, nunca filas por persona.
     if (auth.user.roleId === 'observador') {
       const rows = await this.store.findMany('people', { archived: { $ne: true } }, { limit: 20000 });
-      return { ok: true, status: 200, summary: observerSummary(rows) };
+      let analizadorByPid: Record<string, { estado?: string }> | null = null;
+      try {
+        const app = await this.store.findOne('program_settings', { key: 'app_state' });
+        const map = (app as { analizadorByPid?: Record<string, { estado?: string }> } | null)
+          ?.analizadorByPid;
+        if (map && typeof map === 'object') analizadorByPid = map;
+      } catch {
+        /* sin app_state → solo people */
+      }
+      return { ok: true, status: 200, summary: observerSummary(rows, analizadorByPid) };
     }
 
     const limit = Math.min(Math.max(Number(data.limit) || 5000, 1), 20000);

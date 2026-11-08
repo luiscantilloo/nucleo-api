@@ -82,6 +82,15 @@ export const APP_STATE_SLICES = [
   'moodLogs',
   /** Partidas de juegos (Sudoku) por paciente (historial clínico). */
   'gameLogs',
+  /** Config vigente del analizador + borrador pendiente de aprobación clínica. */
+  'anCfg',
+  'anDraft',
+  /** Parámetros de juegos (nivel, movimientos, sonido…) por módulo. */
+  'gameCfg',
+  /** Avisos del analizador (ámbar; no crisis). */
+  'avisos',
+  /** Snapshot por paciente: estado, series, bandas, lectura. */
+  'analizadorByPid',
   'recursos',
   'activity',
   'accessLog',
@@ -173,7 +182,14 @@ export function mergePathRequests(
     }
     const rank = (a: Record<string, unknown>) => {
       const s = String(a.status || 'pending').toLowerCase();
-      if (s === 'approved' || s === 'rejected') return 3;
+      // ES + EN (el front guarda «aprobada» / «rechazada»).
+      if (
+        s === 'approved' ||
+        s === 'aprobada' ||
+        s === 'rejected' ||
+        s === 'rechazada'
+      )
+        return 3;
       if (s === 'superseded') return 2;
       if (s === 'pending') return 1;
       return 2;
@@ -185,7 +201,11 @@ export function mergePathRequests(
     // Pending nuevo (reenvío admin) gana sobre approved/rejected del mismo id.
     if (
       rSt === 'pending' &&
-      (pSt === 'approved' || pSt === 'rejected' || pSt === 'superseded') &&
+      (pSt === 'approved' ||
+        pSt === 'aprobada' ||
+        pSt === 'rejected' ||
+        pSt === 'rechazada' ||
+        pSt === 'superseded') &&
       rAt > pAt
     ) {
       map.set(id, norm);
