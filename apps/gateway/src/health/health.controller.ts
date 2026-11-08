@@ -5,6 +5,8 @@ import { ProxyService } from '../proxy/proxy.service';
 import { readToken, sendResult } from '../proxy/http';
 import { publicProgramView, loadProgram } from '../../../../libs/program/src/load-program';
 
+const STARTED_AT = new Date().toISOString();
+
 @Controller()
 export class HealthController {
   constructor(private readonly proxy: ProxyService) {}
@@ -12,11 +14,14 @@ export class HealthController {
   /** Público (lo usa el monitor). SPEC-10 FR-10.5: incluye el commit desplegado. */
   @Get('health')
   health() {
+    const programId = process.env.PROGRAM_ID || 'parienta';
     return {
       ok: true,
       service: 'nucleo-gateway',
-      programId: process.env.PROGRAM_ID || 'parienta',
+      programId,
       commit: process.env.NARA_COMMIT || process.env.RENDER_GIT_COMMIT || null,
+      db: process.env.MONGODB_DB || null,
+      startedAt: STARTED_AT,
     };
   }
 
