@@ -1,4 +1,3 @@
-import { geminiComplete, isGeminiConfigured } from './gemini';
 import { openaiComplete, isOpenAIConfigured } from './openai';
 
 export type LlmCompleteOpts = {
@@ -7,31 +6,18 @@ export type LlmCompleteOpts = {
   system?: string;
 };
 
-/** Prefiere Gemini si hay key; si no (o si falla), OpenAI. */
+/**
+ * TRL6 Quintia: TEJIVA usa solo OpenAI.
+ * Gemini no se invoca (aunque exista GEMINI_API_KEY en el entorno).
+ */
 export function isLlmConfigured() {
-  return isGeminiConfigured() || isOpenAIConfigured();
+  return isOpenAIConfigured();
 }
 
 export async function llmComplete(prompt: string, opts?: LlmCompleteOpts) {
-  if (isGeminiConfigured()) {
-    try {
-      const r = await geminiComplete(prompt, {
-        temperature: opts?.temperature,
-        maxTokens: opts?.maxTokens,
-        system: opts?.system,
-      });
-      return { ...r, provider: 'gemini' as const };
-    } catch (err) {
-      if (!isOpenAIConfigured()) throw err;
-      const r = await openaiComplete(prompt, opts);
-      return { ...r, provider: 'openai' as const };
-    }
+  if (!isOpenAIConfigured()) {
+    throw new Error('Falta OPENAI_API_KEY en el entorno.');
   }
-  if (isOpenAIConfigured()) {
-    const r = await openaiComplete(prompt, opts);
-    return { ...r, provider: 'openai' as const };
-  }
-  throw new Error(
-    'Falta OPENAI_API_KEY o GEMINI_API_KEY en el entorno de plateado-api.',
-  );
+  const r = await openaiComplete(prompt, opts);
+  return { ...r, provider: 'openai' as const };
 }
