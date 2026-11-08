@@ -1,10 +1,11 @@
 import { logIntegration } from '@nara/common';
 import { recordOutbound } from './outbound-evidence';
 
-/** URL del webhook TEO paciente (n8n). Override con N8N_TEO_WEBHOOK. */
-const DEFAULT_TEO_N8N =
-  'https://polariatech.app.n8n.cloud/webhook/teopaciente';
-
+/**
+ * URL del webhook TEO paciente (n8n).
+ * Solo se llama si `N8N_TEO_WEBHOOK` está definido y no vacío.
+ * Sin default en código (TRL6 Quintia: n8n apagado si la variable no existe).
+ */
 export type N8nTeoPayload = {
   message: string;
   chatInput: string;
@@ -41,12 +42,13 @@ function readN8nRespuesta(raw: string): string {
 
 /**
  * Llama al webhook n8n de TEO paciente.
+ * Sin `N8N_TEO_WEBHOOK` (o vacío) → no hay llamada (return null).
  * Si N8N_WEBHOOK_SECRET está definido, envía x-nara-secret; si no, no lo envía y no falla.
  */
 export async function callN8nTeo(
   payload: N8nTeoPayload,
 ): Promise<string | null> {
-  const url = String(process.env.N8N_TEO_WEBHOOK || DEFAULT_TEO_N8N).trim();
+  const url = String(process.env.N8N_TEO_WEBHOOK || '').trim();
   if (!url) return null;
 
   const headers = n8nTeoHeaders();
