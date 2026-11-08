@@ -154,13 +154,11 @@ export class AnalizadorService {
     );
     const esAdmin = auth.user.roleId === 'admin';
     const db = await this.mongo.db();
-    const existing = await db.collection('program_settings').findOne({ key: APP_STATE_KEY });
-    const prevLogs = esMapa(existing?.gameLogs)
-      ? { ...(existing!.gameLogs as Record<string, unknown>) }
-      : {};
 
     let aceptados = 0;
     const rechazados: Array<{ i: number; error: string }> = [];
+    /** Partidas nuevas por paciente (evita pisar otros pids bajo carga concurrente). */
+    const porPid = new Map<string, Record<string, unknown>[]>();
 
     for (let i = 0; i < raw.length; i += 1) {
       const ev = raw[i];
@@ -174,19 +172,11 @@ export class AnalizadorService {
         rechazados.push({ i, error: 'falta pid' });
         continue;
       }
-      if (!esAdmin && !suyas.has(pid) && !suyas.has(String(auth.user.id))) {
-        // paciente solo escribe su historial
-        if (!suyas.has(pid)) {
-          rechazados.push({ i, error: 'sin permiso sobre este pid' });
-          continue;
-        }
-      }
-      const writePid = esAdmin ? pid : String(auth.user.patientId || auth.user.id);
-      if (!esAdmin && writePid !== pid && !suyas.has(pid)) {
-        rechazados.push({ i, error: 'pid ajeno' });
+      const target = esAdmin ? pid : String(auth.user.patientId || auth.user.id);
+      if (!esAdmin && !suyas.has(pid) && target !== pid) {
+        rechazados.push({ i, error: 'sin permiso sobre este pid' });
         continue;
       }
-      const target = esAdmin ? pid : String(auth.user.patientId || auth.user.id);
       const inicio = Number(row.startedAt ?? row.inicio ?? row.at) || Date.now();
       const fin = Number(row.finishedAt ?? row.fin ?? row.completedAt) || inicio;
       const id = String(row.id || `EVT-${target}-${inicio}`);
@@ -205,13 +195,11 @@ export class AnalizadorService {
         durationMs: Number(row.durationMs ?? row.durMs) || Math.max(0, fin - inicio),
         source: row.source || 'eventos.lote',
       };
-      const prev = Array.isArray(prevLogs[target]) ? [...(prevLogs[target] as unknown[])] : [];
-      const idx = prev.findIndex(
-        (x) => x && typeof x === 'object' && String((x as { id?: unknown }).id || '') === id,
-      );
-      if (idx >= 0) prev[idx] = entry;
-      else prev.push(entry);
-      prevLogs[target] = prev;
+      const lista = porPid.get(target) || [];
+      const idx = lista.findIndex((x) => String(x.id || '') === id);
+      if (idx >= 0) lista[idx] = entry;
+      else lista.push(entry);
+      porPid.set(target, lista);
       aceptados += 1;
     }
 
@@ -220,14 +208,36 @@ export class AnalizadorService {
     }
 
     const now = new Date();
-    await db.collection('program_settings').updateOne(
-      { key: APP_STATE_KEY },
-      {
-        $set: { gameLogs: prevLogs, key: APP_STATE_KEY, updatedAt: now },
-        $setOnInsert: { createdAt: now },
-      },
-      { upsert: true },
-    );
+    // $set por clave de paciente: 20 VU no se pisan entre sí (C3 / bloque 2).
+    for (const [target, nuevas] of porPid) {
+      const existing = await db.collection('program_settings').findOne(
+        { key: APP_STATE_KEY },
+        { projection: { [`gameLogs.${target}`]: 1 } },
+      );
+      const prevRaw = esMapa(existing?.gameLogs)
+        ? (existing!.gameLogs as Record<string, unknown>)[target]
+        : undefined;
+      const prev = Array.isArray(prevRaw) ? [...(prevRaw as unknown[])] : [];
+      for (const entry of nuevas) {
+        const idx = prev.findIndex(
+          (x) => x && typeof x === 'object' && String((x as { id?: unknown }).id || '') === String(entry.id),
+        );
+        if (idx >= 0) prev[idx] = entry;
+        else prev.push(entry);
+      }
+      await db.collection('program_settings').updateOne(
+        { key: APP_STATE_KEY },
+        {
+          $set: {
+            [`gameLogs.${target}`]: prev,
+            key: APP_STATE_KEY,
+            updatedAt: now,
+          },
+          $setOnInsert: { createdAt: now },
+        },
+        { upsert: true },
+      );
+    }
 
     return {
       ok: true,
