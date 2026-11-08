@@ -15,6 +15,11 @@ function n8nTeoHeaders(): Record<string, string> {
   return headers;
 }
 
+/** Misma regla que callN8nTeo: sin URL en env → no hay llamada. */
+function n8nTeoUrl(): string {
+  return String(process.env.N8N_TEO_WEBHOOK || '').trim();
+}
+
 test('sin secreto no envía x-nara-secret', () => {
   const prev = process.env.N8N_WEBHOOK_SECRET;
   delete process.env.N8N_WEBHOOK_SECRET;
@@ -36,5 +41,27 @@ test('con secreto envía x-nara-secret', () => {
   } finally {
     if (prev === undefined) delete process.env.N8N_WEBHOOK_SECRET;
     else process.env.N8N_WEBHOOK_SECRET = prev;
+  }
+});
+
+test('sin N8N_TEO_WEBHOOK no hay URL (n8n apagado)', () => {
+  const prev = process.env.N8N_TEO_WEBHOOK;
+  delete process.env.N8N_TEO_WEBHOOK;
+  try {
+    assert.equal(n8nTeoUrl(), '');
+  } finally {
+    if (prev === undefined) delete process.env.N8N_TEO_WEBHOOK;
+    else process.env.N8N_TEO_WEBHOOK = prev;
+  }
+});
+
+test('N8N_TEO_WEBHOOK vacío o solo espacios → sin URL', () => {
+  const prev = process.env.N8N_TEO_WEBHOOK;
+  process.env.N8N_TEO_WEBHOOK = '   ';
+  try {
+    assert.equal(n8nTeoUrl(), '');
+  } finally {
+    if (prev === undefined) delete process.env.N8N_TEO_WEBHOOK;
+    else process.env.N8N_TEO_WEBHOOK = prev;
   }
 });
