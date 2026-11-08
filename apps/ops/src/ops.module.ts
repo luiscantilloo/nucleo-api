@@ -18,6 +18,8 @@ import { AssetsController } from './assets/assets.controller';
 import { AssetsService } from './assets/assets.service';
 import { AppStateController } from './app-state/app-state.controller';
 import { AppStateService } from './app-state/app-state.service';
+import { AnalizadorController } from './analizador/analizador.controller';
+import { AnalizadorService } from './analizador/analizador.service';
 
 @Module({
   imports: [
@@ -34,6 +36,7 @@ import { AppStateService } from './app-state/app-state.service';
     FlagsController,
     AssetsController,
     AppStateController,
+    AnalizadorController,
   ],
   providers: [
     HealthService,
@@ -44,6 +47,7 @@ import { AppStateService } from './app-state/app-state.service';
     FlagsService,
     AssetsService,
     AppStateService,
+    AnalizadorService,
     MongoStore,
   ],
 })

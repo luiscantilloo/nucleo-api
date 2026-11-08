@@ -38,6 +38,11 @@ export const Patterns = {
   APP_STATE_GET: 'ops.appState.get',
   APP_STATE_PUT: 'ops.appState.put',
   ALERTS_CREATE: 'ops.alerts.create',
+  /** TRL6 A-01 §6: ingesta de partidas / panel e informes del analizador. */
+  EVENTOS_LOTE: 'ops.eventos.lote',
+  ANALIZADOR_PANEL: 'ops.analizador.panel',
+  ANALIZADOR_PERSONA: 'ops.analizador.persona',
+  INFORMES_ANALIZADOR: 'ops.informes.analizador',
   HEALTH_DB: 'ops.health.db',
 
   TEO_ASK: 'ai.teo.ask',

@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Patch,
   Post,
   Put,
@@ -196,5 +197,34 @@ export class OpsProxyController {
     @Body() body: Record<string, unknown>,
   ) {
     return this.send(req, res, 'ops', Patterns.ALERTS_CREATE, { body });
+  }
+
+  /** TRL6 A-01 §6 */
+  @Post('eventos/lote')
+  eventosLote(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.send(req, res, 'ops', Patterns.EVENTOS_LOTE, { body });
+  }
+
+  @Get('analizador/panel')
+  analizadorPanel(@Req() req: Request, @Res() res: Response) {
+    return this.send(req, res, 'ops', Patterns.ANALIZADOR_PANEL);
+  }
+
+  @Get('analizador/personas/:id')
+  analizadorPersona(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Param('id') id: string,
+  ) {
+    return this.send(req, res, 'ops', Patterns.ANALIZADOR_PERSONA, { id });
+  }
+
+  @Get('informes/analizador')
+  informesAnalizador(@Req() req: Request, @Res() res: Response) {
+    return this.send(req, res, 'ops', Patterns.INFORMES_ANALIZADOR);
   }
 }
