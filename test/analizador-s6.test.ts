@@ -11,17 +11,23 @@ test('patterns §6 existen', () => {
   assert.equal(Patterns.INFORMES_ANALIZADOR, 'ops.informes.analizador');
 });
 
-test('experto sin analizadorByPid; clínico con territorio', () => {
+test('experto sin analizadorByPid ni gameLogs; clínico con territorio', () => {
   const slices = {
     rules: { v: 1 },
     analizadorByPid: {
       a: { estado: 'estable', lecturas: 1 },
       b: { estado: 'cambio' },
     },
+    gameLogs: {
+      a: [{ id: 'p1' }],
+      b: [{ id: 'p2' }],
+    },
   };
   const ids = new Set(['a']);
   const e = filtrarLectura(slices, { id: 'e1', roleId: 'experto', terr: 'T' }, ids);
   assert.equal(e.analizadorByPid, undefined);
+  assert.equal(e.gameLogs, undefined);
   const c = filtrarLectura(slices, { id: 'c1', roleId: 'clinico', terr: 'T' }, ids);
   assert.deepEqual(c.analizadorByPid, { a: { estado: 'estable', lecturas: 1 } });
+  assert.deepEqual(c.gameLogs, { a: [{ id: 'p1' }] });
 });
