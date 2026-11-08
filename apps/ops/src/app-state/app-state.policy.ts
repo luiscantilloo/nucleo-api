@@ -170,9 +170,9 @@ export function filtrarLectura(slices: Slices, user: PolicyUser, ids: Set<string
   // experto y clínico
   for (const [k, v] of Object.entries(slices)) {
     if (SOLO_ADMIN_LEE.includes(k)) continue;
-    // A-01 / TRL6: el snapshot del analizador no viaja en app-state al experto (ni gestor).
-    // Se lee por GET /api/analizador/* (sección 6). El clínico sí lo recibe aquí.
-    if ((r === 'experto') && k === 'analizadorByPid') continue;
+    // A-01 / bloque 2 TRL6: experto (y gestor) no reciben snapshot clínico ni partidas
+    // en app-state. Analizador → GET /api/analizador/*. El clínico sí los recibe aquí.
+    if (r === 'experto' && (k === 'analizadorByPid' || k === 'gameLogs')) continue;
     // H-003 (SPEC-003 FR-003): avisos propios y avance por persona solo del territorio.
     if (k === 'notifs') {
       out[k] = esMapa(v) ? Object.fromEntries(clavesNotifs(user).filter((c) => v[c] !== undefined).map((c) => [c, v[c]])) : v;

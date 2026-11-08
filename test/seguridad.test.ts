@@ -58,15 +58,18 @@ test('app-state lectura: experto solo registros de su territorio y sin registros
   assert.ok(!('accessLog' in e));
 });
 
-test('app-state lectura: experto no recibe analizadorByPid (A-01 §6 vía REST)', () => {
+test('app-state lectura: experto no recibe analizadorByPid ni gameLogs (A-01 / bloque 2)', () => {
   const conAn = {
     ...slices,
     analizadorByPid: { 'sm-1': { estado: 'estable' }, 'sm-9': { estado: 'cambio' } },
+    gameLogs: { 'sm-1': [{ id: 'g1' }], 'sm-9': [{ id: 'g9' }] },
   };
   const e = filtrarLectura(conAn, experto, idsBuc);
   assert.ok(!('analizadorByPid' in e));
+  assert.ok(!('gameLogs' in e));
   const c = filtrarLectura(conAn, clinico, idsBuc);
   assert.deepEqual(c.analizadorByPid, { 'sm-1': { estado: 'estable' } });
+  assert.deepEqual(c.gameLogs, { 'sm-1': [{ id: 'g1' }] });
 });
 
 test('app-state lectura/escritura: alias gestor ≡ experto y persona ≡ paciente', () => {
