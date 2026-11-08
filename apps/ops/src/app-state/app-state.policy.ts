@@ -16,9 +16,9 @@ function effectiveRole(user: PolicyUser): string {
 }
 
 /** Apartados con un registro por paciente (se filtran al territorio para experto y clínico). */
-const POR_PACIENTE = ['alerts', 'crisisLog', 'closedToday', 'notes', 'referrals', 'consents', 'visits', 'revisits', 'falsePositives', 'pendingSync', 'pathAdjust', 'rejected'];
+const POR_PACIENTE = ['alerts', 'crisisLog', 'closedToday', 'notes', 'referrals', 'consents', 'visits', 'revisits', 'falsePositives', 'pendingSync', 'pathAdjust', 'rejected', 'avisos'];
 /** Apartados guardados como mapa { idPaciente: [...] } (se filtran por clave al territorio). */
-const MAPA_POR_PACIENTE = ['notes', 'pathAdjust', 'consents', 'moodLogs', 'gameLogs'];
+const MAPA_POR_PACIENTE = ['notes', 'pathAdjust', 'consents', 'moodLogs', 'gameLogs', 'analizadorByPid'];
 const esMapa = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 /** Registros internos: solo el admin los lee. */
 const SOLO_ADMIN_LEE = ['accessLog', 'agentLog', 'aiLog', 'activity'];
@@ -29,7 +29,7 @@ const CLINICO_NO_ESCRIBE = ['terrOv', 'expertOv', 'personOv', 'assetOv', 'assets
 /** Lo único que lee el observador (sin datos personales). */
 const OBSERVADOR_LEE = ['rules', 'recursos', 'weekBase', 'terrOv'];
 /** Lo que lee el paciente para pintar su app. */
-const PACIENTE_LEE = ['rules', 'recursos', 'pathOverrides', 'moodLogs', 'gameLogs'];
+const PACIENTE_LEE = ['rules', 'recursos', 'pathOverrides', 'moodLogs', 'gameLogs', 'anCfg', 'gameCfg'];
 
 const pidDe = (r: Row) => String(r?.pid ?? r?.personId ?? r?.patientId ?? '');
 

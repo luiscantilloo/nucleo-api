@@ -30,12 +30,41 @@ function contar(
   return out;
 }
 
-export function observerSummary(rows: Record<string, unknown>[]) {
+const ESTADOS_AN: Record<string, string> = {
+  base: 'En línea base',
+  estable: 'Estables',
+  mejorando: 'Mejorando',
+  cambio: 'Cambio a revisar',
+};
+
+/** Agrega estados del analizador (OBS-*). Grupos &lt; MIN_GRUPO → null. */
+export function contarAnalizador(
+  byPid: Record<string, { estado?: string } | null | undefined> | null | undefined,
+): Record<string, number | null> {
+  const m = new Map<string, number>();
+  for (const snap of Object.values(byPid || {})) {
+    const k = ESTADOS_AN[String(snap?.estado || 'base')] || 'Sin estado';
+    m.set(k, (m.get(k) || 0) + 1);
+  }
+  const out: Record<string, number | null> = {};
+  for (const label of Object.values(ESTADOS_AN)) {
+    const v = m.get(label) || 0;
+    if (!v) continue;
+    out[label] = v < MIN_GRUPO ? null : v;
+  }
+  return out;
+}
+
+export function observerSummary(
+  rows: Record<string, unknown>[],
+  analizadorByPid?: Record<string, { estado?: string } | null | undefined> | null,
+) {
   return {
     total: rows.length,
     minGrupo: MIN_GRUPO,
     porTerritorio: contar(rows, (r) => String(r.terr || '') || 'Sin territorio'),
     porEstado: contar(rows, (r) => String(r.status || '') || 'Sin estado'),
     porRiesgo: contar(rows, (r) => riskLevel(r.profile)),
+    porAnalizador: contarAnalizador(analizadorByPid),
   };
 }
