@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { securityHeaders } from './security-headers';
-import { requestLog } from './request-log';
+import { enforceProgramId, requestLog } from './request-log';
 import { GatewayModule } from './gateway.module';
 
 async function bootstrap() {
@@ -11,6 +11,7 @@ async function bootstrap() {
   // H-008: sin X-Powered-By y con cabeceras básicas de seguridad (la API solo responde JSON).
   app.disable('x-powered-by');
   app.use(securityHeaders);
+  app.use(enforceProgramId);
   app.use(requestLog);
   app.use(cookieParser());
   app.enableCors({
