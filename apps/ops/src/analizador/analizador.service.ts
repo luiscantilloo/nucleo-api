@@ -4,6 +4,7 @@ import { MongoStore } from '@nara/database';
 import { SessionService } from '@nara/auth-core';
 import { requireRoles } from '../shared/require-roles';
 import { idsDelTerritorio, type PolicyUser } from '../app-state/app-state.policy';
+import { docPartida } from './partida-doc';
 
 const MIN_GRUPO = 5;
 const ESTADOS_AN: Record<string, string> = {
@@ -34,10 +35,28 @@ function contarEstados(byPid: Record<string, { estado?: string } | null | undefi
 
 @Injectable()
 export class AnalizadorService {
+  private partidasIdx: Promise<void> | null = null;
+
   constructor(
     private readonly mongo: MongoStore,
     private readonly sessions: SessionService,
   ) {}
+
+  private async ensurePartidasIndexes(
+    col: { createIndex: (keys: Record<string, 1 | -1>, opts?: { unique?: boolean }) => Promise<unknown> },
+  ) {
+    if (!this.partidasIdx) {
+      this.partidasIdx = Promise.all([
+        col.createIndex({ partidaId: 1 }, { unique: true }),
+        col.createIndex({ pid: 1, startedAt: -1 }),
+        col.createIndex({ source: 1 }),
+      ]).then(
+        () => undefined,
+        () => undefined,
+      );
+    }
+    await this.partidasIdx;
+  }
 
   private async slices() {
     const db = await this.mongo.db();
@@ -135,7 +154,9 @@ export class AnalizadorService {
 
   /**
    * POST /api/eventos/lote — ingesta de partidas (paciente / admin).
-   * Cuerpo: `{ eventos: [ { pid, id, game, startedAt|inicio, finishedAt|fin, ... } ] }`
+   * Cada partida → documento propio en `partidas` (idempotente por `partidaId`).
+   * Evita fila sobre un único `program_settings` (RNF-01 / C3 p95).
+   * Cuerpo: `{ eventos: [ { pid, id|partidaId, game, startedAt|inicio, finishedAt|fin, ... } ] }`
    */
   async eventosLote(token: string | null, body: Record<string, unknown>) {
     const auth = await requireRoles(this.sessions, token, [
@@ -154,11 +175,18 @@ export class AnalizadorService {
     );
     const esAdmin = auth.user.roleId === 'admin';
     const db = await this.mongo.db();
+    const col = db.collection('partidas');
+    await this.ensurePartidasIndexes(col);
 
     let aceptados = 0;
     const rechazados: Array<{ i: number; error: string }> = [];
-    /** Partidas nuevas por paciente (evita pisar otros pids bajo carga concurrente). */
-    const porPid = new Map<string, Record<string, unknown>[]>();
+    const ops: Array<{
+      updateOne: {
+        filter: { partidaId: string };
+        update: { $set: Record<string, unknown>; $setOnInsert: Record<string, unknown> };
+        upsert: true;
+      };
+    }> = [];
 
     for (let i = 0; i < raw.length; i += 1) {
       const ev = raw[i];
@@ -177,29 +205,19 @@ export class AnalizadorService {
         rechazados.push({ i, error: 'sin permiso sobre este pid' });
         continue;
       }
-      const inicio = Number(row.startedAt ?? row.inicio ?? row.at) || Date.now();
-      const fin = Number(row.finishedAt ?? row.fin ?? row.completedAt) || inicio;
-      const id = String(row.id || `EVT-${target}-${inicio}`);
-      const entry = {
-        ...row,
-        id,
-        pid: target,
-        type: row.type || 'juego',
-        k: row.k || 'juego',
-        game: row.game || 'sudoku',
-        status: row.status || (row.completo === false ? 'abandoned' : 'done'),
-        startedAt: inicio,
-        inicio,
-        finishedAt: fin,
-        fin,
-        durationMs: Number(row.durationMs ?? row.durMs) || Math.max(0, fin - inicio),
-        source: row.source || 'eventos.lote',
-      };
-      const lista = porPid.get(target) || [];
-      const idx = lista.findIndex((x) => String(x.id || '') === id);
-      if (idx >= 0) lista[idx] = entry;
-      else lista.push(entry);
-      porPid.set(target, lista);
+      const now = new Date();
+      const doc = docPartida(row, target, now);
+      const partidaId = String(doc.partidaId);
+      ops.push({
+        updateOne: {
+          filter: { partidaId },
+          update: {
+            $set: doc,
+            $setOnInsert: { createdAt: now },
+          },
+          upsert: true,
+        },
+      });
       aceptados += 1;
     }
 
@@ -207,37 +225,7 @@ export class AnalizadorService {
       return { ok: false, status: 400, error: 'Ningún evento aceptado.', rechazados };
     }
 
-    const now = new Date();
-    // $set por clave de paciente: 20 VU no se pisan entre sí (C3 / bloque 2).
-    for (const [target, nuevas] of porPid) {
-      const existing = await db.collection('program_settings').findOne(
-        { key: APP_STATE_KEY },
-        { projection: { [`gameLogs.${target}`]: 1 } },
-      );
-      const prevRaw = esMapa(existing?.gameLogs)
-        ? (existing!.gameLogs as Record<string, unknown>)[target]
-        : undefined;
-      const prev = Array.isArray(prevRaw) ? [...(prevRaw as unknown[])] : [];
-      for (const entry of nuevas) {
-        const idx = prev.findIndex(
-          (x) => x && typeof x === 'object' && String((x as { id?: unknown }).id || '') === String(entry.id),
-        );
-        if (idx >= 0) prev[idx] = entry;
-        else prev.push(entry);
-      }
-      await db.collection('program_settings').updateOne(
-        { key: APP_STATE_KEY },
-        {
-          $set: {
-            [`gameLogs.${target}`]: prev,
-            key: APP_STATE_KEY,
-            updatedAt: now,
-          },
-          $setOnInsert: { createdAt: now },
-        },
-        { upsert: true },
-      );
-    }
+    await col.bulkWrite(ops, { ordered: false });
 
     return {
       ok: true,
